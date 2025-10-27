@@ -1,0 +1,17 @@
+{
+    "name": "RestroSaaS",
+    "short_name": "RestroSaaS",
+    "start_url": "/",
+    "background_color": "#6777ef",
+    "description": "Multi-tenant Restaurant Management System",
+    "display": "standalone",
+    "theme_color": "#6777ef",
+    "icons": [
+        {
+            "src": "/admin-assets/assets/image/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

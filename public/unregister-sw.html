@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Désactivation Service Worker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .status {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .success {
+            color: #4ade80;
+        }
+        .info {
+            color: #60a5fa;
+        }
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #log {
+            margin-top: 20px;
+            text-align: left;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #4ade80;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Nettoyage Service Worker</h1>
+        <div class="status" id="status">
+            <span class="info">⏳ Initialisation...</span>
+        </div>
+        <div id="log"></div>
+        <button onclick="location.href='/'">🏠 Retour à l'accueil</button>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function unregisterServiceWorkers() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    addLog('🔍 Recherche des Service Workers...');
+
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+
+                    if (registrations.length === 0) {
+                        addLog('✅ Aucun Service Worker trouvé');
+                        status.innerHTML = '<span class="success">✅ Aucun Service Worker actif</span>';
+                        return;
+                    }
+
+                    addLog(`📋 ${registrations.length} Service Worker(s) trouvé(s)`);
+
+                    for (let registration of registrations) {
+                        addLog(`🗑️ Désactivation: ${registration.scope}`);
+                        await registration.unregister();
+                        addLog(`✅ Désactivé: ${registration.scope}`);
+                    }
+
+                    addLog('🧹 Nettoyage des caches...');
+                    const cacheNames = await caches.keys();
+                    for (let cacheName of cacheNames) {
+                        addLog(`🗑️ Suppression du cache: ${cacheName}`);
+                        await caches.delete(cacheName);
+                    }
+
+                    addLog('✅ Tous les caches ont été supprimés');
+                    status.innerHTML = '<span class="success">✅ Nettoyage terminé avec succès!</span>';
+
+                    addLog('🔄 Rechargement de la page dans 3 secondes...');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+
+                } catch (error) {
+                    addLog(`❌ Erreur: ${error.message}`);
+                    status.innerHTML = '<span style="color: #f87171;">❌ Erreur lors du nettoyage</span>';
+                    console.error('Error:', error);
+                }
+            } else {
+                addLog('⚠️ Service Workers non supportés par ce navigateur');
+                status.innerHTML = '<span class="info">ℹ️ Service Workers non supportés</span>';
+            }
+        }
+
+        // Exécution automatique au chargement
+        window.addEventListener('load', () => {
+            addLog('🚀 Démarrage du nettoyage...');
+            unregisterServiceWorkers();
+        });
+    </script>
+</body>
+</html>

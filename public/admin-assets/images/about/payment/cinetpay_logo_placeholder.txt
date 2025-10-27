@@ -1,0 +1,10 @@
+/* This is a placeholder for the CinetPay logo image */
+/* The actual cinetpay.png image should be placed in: */
+/* public/admin-assets/images/about/payment/cinetpay.png */
+
+/* CinetPay brand colors and styling guidelines:
+ * Primary color: #FF6B35 (Orange)
+ * Secondary color: #2C3E50 (Dark Blue)
+ * Logo dimensions: 120x60px recommended
+ * Background: Transparent or white
+ */
