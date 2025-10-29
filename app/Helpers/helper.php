@@ -13,6 +13,7 @@ use App\Models\Transaction;
 use App\Models\CustomStatus;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Session;
+use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\App;
@@ -942,29 +943,80 @@ Click here for next order 👇
             $data->vendor_id = $vendor_id;
             $data->currency = $rec->currency;
 
+            // Créer les dossiers nécessaires s'ils n'existent pas
+            $logoDir = storage_path('app/public/admin-assets/images/about/logo/');
+            $faviconDir = storage_path('app/public/admin-assets/images/about/favicon/');
+            $ogImageDir = storage_path('app/public/admin-assets/images/about/og_image/');
+            
+            if (!File::exists($logoDir)) {
+                File::makeDirectory($logoDir, 0755, true);
+            }
+            if (!File::exists($faviconDir)) {
+                File::makeDirectory($faviconDir, 0755, true);
+            }
+            if (!File::exists($ogImageDir)) {
+                File::makeDirectory($ogImageDir, 0755, true);
+            }
+
                // logo===================================================
-               $oldPath =  storage_path('app/public/admin-assets/images/about/defaultimages/' . $rec->logo);
-               $fileExtensionlogo = File::extension($oldPath);
-               $newname =  'logo-' . uniqid() . "." . $fileExtensionlogo;
-               $newPathWithName = storage_path('app/public/admin-assets/images/about/logo/') . $newname;
-               File::copy($oldPath, $newPathWithName);
-               $data->logo = $newname;
+               if (!empty($rec->logo)) {
+                   $oldPath =  storage_path('app/public/admin-assets/images/about/defaultimages/' . $rec->logo);
+                   if (File::exists($oldPath) && File::isFile($oldPath)) {
+                       try {
+                           $fileExtensionlogo = File::extension($oldPath);
+                           $newname =  'logo-' . uniqid() . "." . $fileExtensionlogo;
+                           $newPathWithName = storage_path('app/public/admin-assets/images/about/logo/') . $newname;
+                           File::copy($oldPath, $newPathWithName);
+                           $data->logo = $newname;
+                       } catch (Exception $e) {
+                           $data->logo = 'logo.png'; // valeur par défaut en cas d'erreur
+                       }
+                   } else {
+                       $data->logo = 'logo.png'; // valeur par défaut
+                   }
+               } else {
+                   $data->logo = 'logo.png'; // valeur par défaut
+               }
 
                // favicon=============
-               $oldfavicon = storage_path('app/public/admin-assets/images/about/defaultimages/' . $rec->favicon);
-               $fileExtensionfavicon = File::extension($oldfavicon);
-               $newfavicon =  'favicon-' . uniqid() . "." . $fileExtensionfavicon;
-               $newfaviconWithName = storage_path('app/public/admin-assets/images/about/favicon/') . $newfavicon;
-               File::copy($oldfavicon, $newfaviconWithName);
-               $data->favicon = $newfavicon;
+               if (!empty($rec->favicon)) {
+                   $oldfavicon = storage_path('app/public/admin-assets/images/about/defaultimages/' . $rec->favicon);
+                   if (File::exists($oldfavicon) && File::isFile($oldfavicon)) {
+                       try {
+                           $fileExtensionfavicon = File::extension($oldfavicon);
+                           $newfavicon =  'favicon-' . uniqid() . "." . $fileExtensionfavicon;
+                           $newfaviconWithName = storage_path('app/public/admin-assets/images/about/favicon/') . $newfavicon;
+                           File::copy($oldfavicon, $newfaviconWithName);
+                           $data->favicon = $newfavicon;
+                       } catch (Exception $e) {
+                           $data->favicon = 'favicon.png'; // valeur par défaut en cas d'erreur
+                       }
+                   } else {
+                       $data->favicon = 'favicon.png'; // valeur par défaut
+                   }
+               } else {
+                   $data->favicon = 'favicon.png'; // valeur par défaut
+               }
 
                // og_image
-               $oldogimage = storage_path('app/public/admin-assets/images/about/defaultimages/' . $rec->og_image);
-               $fileExtensionogimage = File::extension($oldogimage);
-               $newogimage =  'og_image-' . uniqid() . "." . $fileExtensionogimage;
-               $newogimageWithName = storage_path('app/public/admin-assets/images/about/og_image/') . $newogimage;
-               File::copy($oldogimage, $newogimageWithName);
-               $data->og_image = $newogimage;
+               if (!empty($rec->og_image)) {
+                   $oldogimage = storage_path('app/public/admin-assets/images/about/defaultimages/' . $rec->og_image);
+                   if (File::exists($oldogimage) && File::isFile($oldogimage)) {
+                       try {
+                           $fileExtensionogimage = File::extension($oldogimage);
+                           $newogimage =  'og_image-' . uniqid() . "." . $fileExtensionogimage;
+                           $newogimageWithName = storage_path('app/public/admin-assets/images/about/og_image/') . $newogimage;
+                           File::copy($oldogimage, $newogimageWithName);
+                           $data->og_image = $newogimage;
+                       } catch (Exception $e) {
+                           $data->og_image = 'og_image.png'; // valeur par défaut en cas d'erreur
+                       }
+                   } else {
+                       $data->og_image = 'og_image.png'; // valeur par défaut
+                   }
+               } else {
+                   $data->og_image = 'og_image.png'; // valeur par défaut
+               }
 
             $data->currency_position = $rec->currency_position;
             $data->timezone = $rec->timezone;
