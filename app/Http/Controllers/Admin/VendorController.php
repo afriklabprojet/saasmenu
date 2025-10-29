@@ -231,11 +231,14 @@ class VendorController extends Controller
         $validatorslug = Validator::make(['slug' => $request->slug], [
             'slug' => [
                 'required',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                'min:3',
+                'max:50',
                 Rule::unique('users')->where('type', 2)->where('is_deleted', 2),
             ]
         ]);
         if ($validatorslug->fails()) {
-            return redirect()->back()->with('error', trans('messages.unique_slug'));
+            return redirect()->back()->with('error', 'Le lien personnalisé doit contenir uniquement des lettres minuscules, des chiffres et des tirets. Pas d\'espaces autorisés.');
         }
 
         if(session()->has('social_login')){

@@ -433,7 +433,7 @@
     "google_analytics_available"=>"Google Analyticas Available",
     "blogs"=>"Blogs",
     "footer_features"=>"Footer Features",
-    "personlized_link"=>"Personlized Link",
+    "personalized_link"=>"Lien Personnalisé",
     "contact_email"=>"Contact Email",
     "contact_mobile"=>"Contact Mobile",
     "welcome_back"=>"Bon retour !",

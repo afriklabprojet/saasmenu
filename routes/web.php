@@ -373,20 +373,20 @@ Route::group(['namespace' => 'admin', 'prefix' => 'admin'], function () {
                             Route::post('reorder_promotionalbanner', [BannerController::class, 'reorder_promotionalbanner']);
                         }
                     );
-  // STORE CATEGORIES
-  Route::group(
-    ['prefix' => 'store_categories'],
-    function () {
-        Route::get('/', [StoreCategoryController::class, 'index']);
-        Route::get('add', [StoreCategoryController::class, 'add_category']);
-        Route::post('save', [StoreCategoryController::class, 'save_category']);
-        Route::get('edit-{id}', [StoreCategoryController::class, 'edit_category']);
-        Route::post('update-{id}', [StoreCategoryController::class, 'update_category']);
-        Route::get('change_status-{id}/{status}', [StoreCategoryController::class, 'change_status']);
-        Route::get('delete-{id}', [StoreCategoryController::class, 'delete_category']);
-        Route::post('/reorder_category', [StoreCategoryController::class, 'reorder_category']);
-    }
-);
+                    // STORE CATEGORIES
+                    Route::group(
+                        ['prefix' => 'store_categories'],
+                        function () {
+                            Route::get('/', [StoreCategoryController::class, 'index']);
+                            Route::get('add', [StoreCategoryController::class, 'add_category']);
+                            Route::post('save', [StoreCategoryController::class, 'save_category']);
+                            Route::get('edit-{id}', [StoreCategoryController::class, 'edit_category']);
+                            Route::post('update-{id}', [StoreCategoryController::class, 'update_category']);
+                            Route::get('change_status-{id}/{status}', [StoreCategoryController::class, 'change_status']);
+                            Route::get('delete-{id}', [StoreCategoryController::class, 'delete_category']);
+                            Route::post('/reorder_category', [StoreCategoryController::class, 'reorder_category']);
+                        }
+                    );
 
                     Route::group(['prefix' => 'language-settings'], function () {
                         Route::post('/update', [LangController::class, 'storeLanguageData']);
@@ -484,32 +484,32 @@ Route::group(['namespace' => 'admin', 'prefix' => 'admin'], function () {
                         }
                     );
 
-                     // extras
-                     Route::get('/getextras', [GlobalExtrasController::class, 'getextras']);
-                     Route::get('/editgetextras-{id}', [GlobalExtrasController::class, 'editgetextras']);
-                     Route::group(
-                         ['prefix' => 'extras'],
-                         function () {
-                             Route::get('/', [GlobalExtrasController::class, 'index']);
-                             Route::get('/add', [GlobalExtrasController::class, 'add']);
-                             Route::post('/save', [GlobalExtrasController::class, 'save']);
-                             Route::get('/edit-{id}', [GlobalExtrasController::class, 'edit']);
-                             Route::post('/update-{id}', [GlobalExtrasController::class, 'update']);
-                             Route::get('/change_status-{id}/{status}', [GlobalExtrasController::class, 'change_status']);
-                             Route::get('delete-{id}', [GlobalExtrasController::class, 'delete']);
-                             Route::post('/reorder_extras', [GlobalExtrasController::class, 'reorder_extras']);
-                         }
-                     );
-                        // Media
-                        Route::group(
-                            ['prefix' => 'media'],
-                            function () {
-                                Route::get('/', [MediaController::class, 'index'])->name('admin.media.index');
-                                Route::post('/add_image', [MediaController::class, 'add_image'])->name('admin.media.upload');
-                                Route::get('delete-{id}', [MediaController::class, 'delete_media'])->name('admin.media.delete');
-                                Route::get('download-{id}', [MediaController::class, 'download'])->name('admin.media.download');
-                            }
-                        );
+                    // extras
+                    Route::get('/getextras', [GlobalExtrasController::class, 'getextras']);
+                    Route::get('/editgetextras-{id}', [GlobalExtrasController::class, 'editgetextras']);
+                    Route::group(
+                        ['prefix' => 'extras'],
+                        function () {
+                            Route::get('/', [GlobalExtrasController::class, 'index']);
+                            Route::get('/add', [GlobalExtrasController::class, 'add']);
+                            Route::post('/save', [GlobalExtrasController::class, 'save']);
+                            Route::get('/edit-{id}', [GlobalExtrasController::class, 'edit']);
+                            Route::post('/update-{id}', [GlobalExtrasController::class, 'update']);
+                            Route::get('/change_status-{id}/{status}', [GlobalExtrasController::class, 'change_status']);
+                            Route::get('delete-{id}', [GlobalExtrasController::class, 'delete']);
+                            Route::post('/reorder_extras', [GlobalExtrasController::class, 'reorder_extras']);
+                        }
+                    );
+                    // Media
+                    Route::group(
+                        ['prefix' => 'media'],
+                        function () {
+                            Route::get('/', [MediaController::class, 'index'])->name('admin.media.index');
+                            Route::post('/add_image', [MediaController::class, 'add_image'])->name('admin.media.upload');
+                            Route::get('delete-{id}', [MediaController::class, 'delete_media'])->name('admin.media.delete');
+                            Route::get('download-{id}', [MediaController::class, 'download'])->name('admin.media.download');
+                        }
+                    );
                     // PLAN
                     Route::group(
                         ['prefix' => 'plan'],
@@ -593,9 +593,11 @@ $parsedUrl = parse_url(url()->current());
 $host = $parsedUrl['host'];
 if (array_key_exists('host', $parsedUrl)) {
     // if it is a path based URL (localhost, 127.0.0.1, or WEBSITE_HOST)
-    if ($host == env('WEBSITE_HOST') ||
+    if (
+        $host == env('WEBSITE_HOST') ||
         strpos($host, 'localhost') !== false ||
-        strpos($host, '127.0.0.1') !== false) {
+        strpos($host, '127.0.0.1') !== false
+    ) {
         $domain = $domain;
         $prefix = '{vendor}';
     }
@@ -729,7 +731,7 @@ Route::post('/cinetpay/notify', [CinetPayController::class, 'notify'])->name('ci
 Route::post('/cinetpay/init', [CinetPayController::class, 'initPayment'])->name('cinetpay.init');
 
 // PWA routes
-require __DIR__.'/pwa.php';
+require __DIR__ . '/pwa.php';
 
 // Language switching routes
 Route::get('/lang/{locale}', [App\Http\Controllers\LanguageController::class, 'switch'])->name('lang.switch');
