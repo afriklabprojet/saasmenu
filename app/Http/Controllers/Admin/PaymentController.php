@@ -70,11 +70,11 @@ class PaymentController extends Controller
                 if (env('Environment') == 'sendbox') {
                     return $this->sendError("This operation was not performed due to demo mode");
                 }
-                if($data->image != $data->payment_name.".png" && file_exists(env('ASSETSPATHURL') . 'admin-assets/images/about/payment/'.$data->image)){
-                    unlink(env('ASSETSPATHURL') . 'admin-assets/images/about/payment/'.$data->image);
+                if($data->image != $data->payment_name.".png" && file_exists(config('app.assets_path_url') . 'admin-assets/images/about/payment/'.$data->image)){
+                    unlink(config('app.assets_path_url') . 'admin-assets/images/about/payment/'.$data->image);
                 }
                 $image = 'payment-' . uniqid() . '.' . $request->image->getClientOriginalExtension();
-                $request->image->move(env('ASSETSPATHURL') . 'admin-assets/images/about/payment/', $image);
+                $request->image->move(config('app.assets_path_url') . 'admin-assets/images/about/payment/', $image);
                 $data->image = $image;
             }
             $data->payment_name = $request->name;

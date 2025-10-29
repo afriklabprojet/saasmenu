@@ -58,6 +58,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Assets Path URL
+    |--------------------------------------------------------------------------
+    |
+    | This value is the base path for assets like images, CSS, and JS files.
+    | This should be set to the storage/app/public directory for proper
+    | asset management through the storage:link command.
+    |
+    */
+
+    'assets_path_url' => env('ASSETSPATHURL', storage_path('app/public/')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

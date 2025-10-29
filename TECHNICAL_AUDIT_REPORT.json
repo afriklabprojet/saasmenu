@@ -1,0 +1,90 @@
+{
+    "timestamp": "2025-10-29 12:01:56",
+    "score": 100,
+    "results": {
+        "controllers": {
+            "admin_controllers_found": 52,
+            "controllers": [
+                "AddonDashboardController.php",
+                "AdminController.php",
+                "AnalyticsController.php",
+                "BackupController.php",
+                "BannerController.php",
+                "CategoryController.php",
+                "CinetPayController.php",
+                "CustomDomainController.php",
+                "CustomerController.php",
+                "FeaturesController.php",
+                "GlobalExtrasController.php",
+                "LangController.php",
+                "LanguageController.php",
+                "LoyaltyAdminController.php",
+                "LoyaltyProgramController.php",
+                "MonitoringController.php",
+                "MultiLanguageController.php",
+                "NotificationController.php",
+                "OrderController.php",
+                "OtherPagesController.php",
+                "POSAdminController.php",
+                "PaymentController.php",
+                "PlanPricingController.php",
+                "ProductController.php",
+                "QrMenuController.php",
+                "QrMenuDesignController.php",
+                "RecaptchaController.php",
+                "RestaurantAnalyticsController.php",
+                "RestaurantBookingController.php",
+                "RestaurantDeliveryController.php",
+                "RestaurantFinanceController.php",
+                "RestaurantMarketingController.php",
+                "RestaurantMenuController.php",
+                "RestaurantPosController.php",
+                "RestaurantReviewController.php",
+                "RestaurantStaffController.php",
+                "SeoController.php",
+                "SettingsController.php",
+                "ShippingareaController.php",
+                "StoreCategoryController.php",
+                "SystemAddonsController.php",
+                "TableBookController.php",
+                "TableBookingController.php",
+                "TableQRAdminController.php",
+                "TaxController.php",
+                "TestimonialController.php",
+                "TimeController.php",
+                "TrainingController.php",
+                "TransactionController.php",
+                "VendorController.php",
+                "WalletController.php",
+                "WhatsappIntegrationController.php"
+            ]
+        },
+        "storage": {
+            "symlink_exists": true,
+            "storage_public_exists": true,
+            "status": "OK"
+        },
+        "env_usage": {
+            "env_calls_outside_config": 0,
+            "status": "OK"
+        },
+        "translations": {
+            "languages_available": [
+                "ar",
+                "en",
+                "fr"
+            ],
+            "languages_count": 3
+        },
+        "bundler": {
+            "vite_config": true,
+            "webpack_config": false,
+            "package_json": true,
+            "recommended_bundler": "Vite"
+        },
+        "routes": {
+            "web_routes": true,
+            "api_routes": true
+        }
+    }
+}

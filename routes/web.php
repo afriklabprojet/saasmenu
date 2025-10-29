@@ -1,33 +1,33 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\admin\AdminController;
-use App\Http\Controllers\admin\PlanPricingController;
-use App\Http\Controllers\admin\CategoryController;
-use App\Http\Controllers\admin\LangController;
-use App\Http\Controllers\admin\ProductController;
-use App\Http\Controllers\admin\SettingsController;
-use App\Http\Controllers\admin\PaymentController;
-use App\Http\Controllers\admin\TransactionController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\PlanPricingController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\LangController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\addons\MediaController;
-use App\Http\Controllers\admin\BannerController;
-use App\Http\Controllers\admin\GlobalExtrasController;
-use App\Http\Controllers\admin\StoreCategoryController;
-use App\Http\Controllers\admin\VendorController;
-use App\Http\Controllers\admin\OrderController;
-use App\Http\Controllers\admin\OtherPagesController;
-use App\Http\Controllers\admin\SystemAddonsController;
-use App\Http\Controllers\admin\TestimonialController;
-use App\Http\Controllers\admin\FeaturesController;
-use App\Http\Controllers\admin\AnalyticsController;
-use App\Http\Controllers\admin\ShippingareaController;
-use App\Http\Controllers\admin\TableBookController;
-use App\Http\Controllers\admin\TimeController;
-use App\Http\Controllers\admin\NotificationController;
+use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\GlobalExtrasController;
+use App\Http\Controllers\Admin\StoreCategoryController;
+use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OtherPagesController;
+use App\Http\Controllers\Admin\SystemAddonsController;
+use App\Http\Controllers\Admin\TestimonialController;
+use App\Http\Controllers\Admin\FeaturesController;
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\ShippingareaController;
+use App\Http\Controllers\Admin\TableBookController;
+use App\Http\Controllers\Admin\TimeController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\addons\WhatsappmessageController;
 use App\Http\Controllers\addons\CinetPayController;
 use App\Http\Controllers\Admin\CinetPayController as AdminCinetPayController;
-use App\Http\Controllers\admin\WalletController;
+use App\Http\Controllers\Admin\WalletController;
 use App\Http\Controllers\admin\RecaptchaController;
 use App\Http\Controllers\LocalizationController;
 use App\Http\Controllers\web\HomeController;
@@ -730,3 +730,7 @@ Route::post('/cinetpay/init', [CinetPayController::class, 'initPayment'])->name(
 
 // PWA routes
 require __DIR__.'/pwa.php';
+
+// Language switching routes
+Route::get('/lang/{locale}', [App\Http\Controllers\LanguageController::class, 'switch'])->name('lang.switch');
+Route::get('/api/lang/current', [App\Http\Controllers\LanguageController::class, 'current'])->name('lang.current');
