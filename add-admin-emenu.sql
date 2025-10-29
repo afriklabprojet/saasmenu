@@ -42,7 +42,7 @@ INSERT INTO `users` VALUES (
     NULL,                                 -- remember_token
     NOW(),                                -- created_at
     NOW()                                 -- updated_at
-) ON DUPLICATE KEY UPDATE 
+) ON DUPLICATE KEY UPDATE
     password = '$2y$10$6KvkjQJpVZvF.E8BYeZ8CO.lWHr2mH3L6jYhVQWK8FiRMTYfWYP6W',
     updated_at = NOW();
 
