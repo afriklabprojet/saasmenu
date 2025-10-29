@@ -13,10 +13,10 @@ use App\Models\Transaction;
 use App\Models\CustomStatus;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Session;
-use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\App;
+use Exception;
 use App\Models\PricingPlan;
 use App\Models\SocialLinks;
 use App\Models\SystemAddons;
@@ -947,7 +947,7 @@ Click here for next order 👇
             $logoDir = storage_path('app/public/admin-assets/images/about/logo/');
             $faviconDir = storage_path('app/public/admin-assets/images/about/favicon/');
             $ogImageDir = storage_path('app/public/admin-assets/images/about/og_image/');
-            
+
             if (!File::exists($logoDir)) {
                 File::makeDirectory($logoDir, 0755, true);
             }
