@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\addons\CouponsController;
+use App\Http\Controllers\Addons\CouponsController;
 
 use App\Http\Controllers\web\HomeController;
 

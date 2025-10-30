@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\addons\BlogController;
+use App\Http\Controllers\Addons\BlogController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes

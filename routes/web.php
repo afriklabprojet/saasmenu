@@ -32,7 +32,7 @@ use App\Http\Controllers\admin\RecaptchaController;
 use App\Http\Controllers\LocalizationController;
 use App\Http\Controllers\web\HomeController;
 use App\Http\Controllers\web\FavoriteController;
-use App\Http\Controllers\admin\TaxController;
+use App\Http\Controllers\Admin\TaxController;
 use App\Http\Controllers\web\UserController as WebUserController;
 use App\Http\Controllers\landing\HomeController as LandingHomeController;
 use App\Http\Controllers\Admin\TableBookingController;
