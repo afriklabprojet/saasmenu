@@ -49,7 +49,7 @@ Route::group(['namespace' => 'admin', 'prefix' => 'admin'], function () {
             Route::get('del-{id}', [CouponsController::class, 'del']);
 
         });
-    
+
 
         Route::middleware('VendorMiddleware')->group(function () {
 
@@ -69,7 +69,7 @@ Route::group(['namespace' => 'admin', 'prefix' => 'admin'], function () {
 
 Route::namespace('front')->group(function () {
 
-    
+
     Route::post('/cart/applypromocode', [HomeController::class, 'applypromocode']);
 
     Route::post('/cart/removepromocode', [HomeController::class, 'removepromocode']);
