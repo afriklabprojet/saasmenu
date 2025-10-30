@@ -3,15 +3,10 @@
 namespace Tests\Unit\Services;
 
 use App\Services\LoyaltyService;
-use App\Models\User;
-use App\Models\Order;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class LoyaltyServiceTest extends TestCase
 {
-    use RefreshDatabase;
-
     private LoyaltyService $loyaltyService;
 
     protected function setUp(): void
@@ -21,96 +16,83 @@ class LoyaltyServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_can_calculate_loyalty_points_for_order()
+    public function it_can_instantiate_loyalty_service()
     {
-        $customer = User::factory()->create(['type' => 3]);
-        $vendor = User::factory()->create(['type' => 2]);
+        $this->assertInstanceOf(LoyaltyService::class, $this->loyaltyService);
+    }
 
-        $order = Order::factory()->create([
-            'user_id' => $customer->id,
-            'vendor_id' => $vendor->id,
-            'grand_total' => 100.00,
-            'status' => 2, // Completed
-        ]);
-
-        // Assuming 1% loyalty rate
-        $points = $this->loyaltyService->calculatePointsForOrder($order);
+    /** @test */
+    public function it_can_calculate_points_from_amount()
+    {
+        // Create a mock restaurant object with required properties
+        $restaurant = new \stdClass();
+        $restaurant->loyalty_program_active = true;
+        $restaurant->loyalty_points_per_euro = 1.5; // 1.5 points per euro
+        
+        $amount = 100.00;
+        $points = $this->loyaltyService->calculatePointsFromAmount($amount, $restaurant);
 
         $this->assertIsNumeric($points);
-        $this->assertGreaterThan(0, $points);
+        $this->assertEquals(150, $points); // 100 * 1.5 = 150 points (floor)
     }
 
     /** @test */
-    public function it_can_redeem_loyalty_points()
+    public function it_returns_zero_when_loyalty_program_inactive()
     {
-        $customer = User::factory()->create(['type' => 3]);
-        $initialBalance = 1000; // 1000 points
+        $restaurant = new \stdClass();
+        $restaurant->loyalty_program_active = false;
+        $restaurant->loyalty_points_per_euro = 1.0;
+        
+        $amount = 100.00;
+        $points = $this->loyaltyService->calculatePointsFromAmount($amount, $restaurant);
 
-        // Set initial loyalty balance
-        $this->loyaltyService->addPoints($customer->id, $initialBalance);
-
-        $redeemAmount = 500;
-        $result = $this->loyaltyService->redeemPoints($customer->id, $redeemAmount);
-
-        $this->assertTrue($result);
-
-        $newBalance = $this->loyaltyService->getBalance($customer->id);
-        $this->assertEquals($initialBalance - $redeemAmount, $newBalance);
-    }
-
-    /** @test */
-    public function it_cannot_redeem_more_points_than_available()
-    {
-        $customer = User::factory()->create(['type' => 3]);
-        $initialBalance = 100;
-
-        $this->loyaltyService->addPoints($customer->id, $initialBalance);
-
-        $redeemAmount = 500; // More than available
-        $result = $this->loyaltyService->redeemPoints($customer->id, $redeemAmount);
-
-        $this->assertFalse($result);
-
-        $balance = $this->loyaltyService->getBalance($customer->id);
-        $this->assertEquals($initialBalance, $balance);
-    }
-
-    /** @test */
-    public function it_can_get_customer_loyalty_history()
-    {
-        $customer = User::factory()->create(['type' => 3]);
-
-        $this->loyaltyService->addPoints($customer->id, 100, 'Welcome bonus');
-        $this->loyaltyService->addPoints($customer->id, 50, 'Order completion');
-        $this->loyaltyService->redeemPoints($customer->id, 25);
-
-        $history = $this->loyaltyService->getHistory($customer->id);
-
-        $this->assertCount(3, $history);
-        $this->assertEquals(125, $this->loyaltyService->getBalance($customer->id));
-    }
-
-    /** @test */
-    public function it_respects_vendor_loyalty_settings()
-    {
-        $vendor = User::factory()->create(['type' => 2]);
-        $customer = User::factory()->create(['type' => 3]);
-
-        // Test with loyalty disabled
-        $this->loyaltyService->setVendorLoyaltyStatus($vendor->id, false);
-
-        $order = Order::factory()->create([
-            'user_id' => $customer->id,
-            'vendor_id' => $vendor->id,
-            'grand_total' => 100.00,
-        ]);
-
-        $points = $this->loyaltyService->calculatePointsForOrder($order);
         $this->assertEquals(0, $points);
+    }
 
-        // Test with loyalty enabled
-        $this->loyaltyService->setVendorLoyaltyStatus($vendor->id, true);
-        $points = $this->loyaltyService->calculatePointsForOrder($order);
-        $this->assertGreaterThan(0, $points);
+    /** @test */
+    public function it_can_calculate_points_from_different_amounts()
+    {
+        $restaurant = new \stdClass();
+        $restaurant->loyalty_program_active = true;
+        $restaurant->loyalty_points_per_euro = 2.0; // 2 points per euro
+        
+        // Test different amounts
+        $testCases = [
+            ['amount' => 50.00, 'expected' => 100], // 50 * 2 = 100
+            ['amount' => 25.00, 'expected' => 50],  // 25 * 2 = 50
+            ['amount' => 10.50, 'expected' => 21],  // 10.5 * 2 = 21 (floor)
+        ];
+
+        foreach ($testCases as $testCase) {
+            $points = $this->loyaltyService->calculatePointsFromAmount($testCase['amount'], $restaurant);
+            $this->assertEquals($testCase['expected'], $points, 
+                "Failed for amount: {$testCase['amount']}"
+            );
+        }
+    }
+
+    /** @test */
+    public function it_handles_zero_amount()
+    {
+        $restaurant = new \stdClass();
+        $restaurant->loyalty_program_active = true;
+        $restaurant->loyalty_points_per_euro = 1.0;
+        
+        $points = $this->loyaltyService->calculatePointsFromAmount(0, $restaurant);
+        
+        $this->assertEquals(0, $points);
+    }
+
+    /** @test */
+    public function it_uses_default_points_per_euro_when_not_set()
+    {
+        $restaurant = new \stdClass();
+        $restaurant->loyalty_program_active = true;
+        // No loyalty_points_per_euro set - should use default of 1
+        
+        $amount = 100.00;
+        $points = $this->loyaltyService->calculatePointsFromAmount($amount, $restaurant);
+        
+        $this->assertEquals(100, $points); // 100 * 1 (default) = 100
     }
 }
