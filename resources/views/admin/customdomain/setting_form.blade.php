@@ -6,7 +6,7 @@
                 <h5 class="fw-bold mb-0">🌐 {{ trans('labels.custom_domain') }}</h5>
             </div>
             <div class="card-body">
-                @if (helper::getplan($vendor_id)->custom_domain == 1)
+                @if (helper::getPlanInfo($vendor_id)->custom_domain == 1)
                     <form action="{{ URL::to('/admin/settings') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="type" value="custom_domain">
