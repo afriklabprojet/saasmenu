@@ -25,14 +25,14 @@ class OrderController extends Controller
     public function checkout(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
 
         $settingdata = helper::appdata($vdata);
         $cartdata = $this->getCartItems($vdata);
-        
+
         if ($cartdata->isEmpty()) {
             return redirect('/cart')->with('error', 'Votre panier est vide');
         }
@@ -70,13 +70,13 @@ class OrderController extends Controller
 
             // Create order
             $order = $this->createOrder($request, $vdata);
-            
+
             // Create order details
             $this->createOrderDetails($order, $cartItems);
-            
+
             // Clear cart
             $this->clearCart($vdata);
-            
+
             // Log order creation
             AuditService::logAdminAction(
                 'CREATE_ORDER',
@@ -100,7 +100,7 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             AuditService::logSecurityEvent('ORDER_CREATION_FAILED', [
                 'error' => $e->getMessage(),
                 'request_data' => $request->all()
@@ -142,7 +142,7 @@ class OrderController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         $order = Order::select([
                 'order_number',
                 DB::raw('DATE_FORMAT(created_at, "%d %M %Y") as date'),
@@ -183,7 +183,7 @@ class OrderController extends Controller
     public function cancel(Request $request, $orderNumber)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         $order = Order::where('order_number', $orderNumber)
                      ->where('vendor_id', $vdata)
                      ->first();
@@ -348,7 +348,7 @@ class OrderController extends Controller
         if ($orderType == 2) { // Pickup
             return 0;
         }
-        
+
         // Implement delivery charge calculation
         return 0; // Placeholder
     }
@@ -367,7 +367,7 @@ class OrderController extends Controller
     private function updateStock($cart)
     {
         $item = $cart->item;
-        
+
         if ($item->stock_management == 1) {
             if ($cart->variants_id) {
                 DB::table('variants')
@@ -398,7 +398,7 @@ class OrderController extends Controller
 
         foreach ($orderDetails as $detail) {
             $item = Item::find($detail->item_id);
-            
+
             if ($item && $item->stock_management == 1) {
                 if ($detail->variants_id) {
                     DB::table('variants')

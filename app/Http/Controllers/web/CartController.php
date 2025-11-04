@@ -29,7 +29,7 @@ class CartController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -66,7 +66,7 @@ class CartController extends Controller
 
         if ($item->stock_management == 1 && $totalQty > $maxQty) {
             return response()->json([
-                'status' => 0, 
+                'status' => 0,
                 'message' => 'Quantité totale dépassée. Maximum: ' . $maxQty
             ], 400);
         }
@@ -87,7 +87,7 @@ class CartController extends Controller
         );
 
         return response()->json([
-            'status' => 1, 
+            'status' => 1,
             'message' => 'Produit ajouté au panier',
             'cart_count' => $this->getCartCount()
         ]);
@@ -99,7 +99,7 @@ class CartController extends Controller
     public function cart(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -121,7 +121,7 @@ class CartController extends Controller
         ]);
 
         $cart = Cart::find($request->cart_id);
-        
+
         if (!$cart) {
             return response()->json(['status' => 0, 'message' => 'Article de panier introuvable'], 404);
         }
@@ -157,7 +157,7 @@ class CartController extends Controller
         ]);
 
         $cart = Cart::find($request->cart_id);
-        
+
         if (!$cart || !$this->verifyCartOwnership($cart)) {
             return response()->json(['status' => 0, 'message' => 'Non autorisé'], 403);
         }
@@ -251,7 +251,7 @@ class CartController extends Controller
     private function validateStock($cart, $newQty)
     {
         $item = $cart->item;
-        
+
         if (!$item || $item->stock_management != 1) {
             return ['valid' => true];
         }

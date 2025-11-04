@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Addons\CouponsController;
 
 use App\Http\Controllers\web\HomeController;
+use App\Http\Controllers\web\PromoCodeController;
 
 /*
 
@@ -70,9 +71,9 @@ Route::group(['namespace' => 'admin', 'prefix' => 'admin'], function () {
 Route::namespace('front')->group(function () {
 
 
-    Route::post('/cart/applypromocode', [HomeController::class, 'applypromocode']);
+    Route::post('/cart/applypromocode', [PromoCodeController::class, 'apply']);
 
-    Route::post('/cart/removepromocode', [HomeController::class, 'removepromocode']);
+    Route::post('/cart/removepromocode', [PromoCodeController::class, 'remove']);
 
 });
 

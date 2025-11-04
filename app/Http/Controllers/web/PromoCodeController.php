@@ -23,7 +23,7 @@ class PromoCodeController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -124,7 +124,7 @@ class PromoCodeController extends Controller
     public function getAvailable(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         $coupons = Coupons::where('vendor_id', $vdata)
                           ->where('is_available', 1)
                           ->where('start_date', '<=', Carbon::now())
@@ -157,7 +157,7 @@ class PromoCodeController extends Controller
         $cartTotal = $this->calculateCartTotal($cartItems);
         if ($cartTotal < $coupon->minimum_amount) {
             return [
-                'valid' => false, 
+                'valid' => false,
                 'message' => "Montant minimum requis: " . number_format($coupon->minimum_amount, 2) . "€"
             ];
         }
@@ -193,7 +193,7 @@ class PromoCodeController extends Controller
         } elseif ($coupon->type == 2) {
             // Percentage discount
             $discountAmount = ($cartTotal * $coupon->price) / 100;
-            
+
             // Apply maximum discount if set
             if ($coupon->maximum_discount > 0) {
                 $discountAmount = min($discountAmount, $coupon->maximum_discount);

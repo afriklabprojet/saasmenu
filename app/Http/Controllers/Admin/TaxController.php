@@ -33,7 +33,7 @@ class TaxController extends Controller
         } else {
             $vendor_id = Auth::user()->id;
         }
-        
+
         $tax = new Tax();
         $tax->vendor_id = $vendor_id;
         $tax->name = $request->validated('name');
@@ -42,7 +42,7 @@ class TaxController extends Controller
         $tax->is_available = 1;
         $tax->is_deleted = 2;
         $tax->save();
-        
+
         // Audit log pour la création de taxe
         AuditService::logAdminAction(
             'CREATE_TAX',
@@ -50,7 +50,7 @@ class TaxController extends Controller
             $request->validated(),
             $tax->id
         );
-        
+
         return redirect('admin/tax/')->with('success', trans('messages.success'));
     }
     public function edit(Request $request)
@@ -65,21 +65,21 @@ class TaxController extends Controller
         } else {
             $vendor_id = Auth::user()->id;
         }
-        
+
         $tax = Tax::where('id', $request->validated('id'))->first();
-        
+
         if (!$tax) {
             return redirect('admin/tax')->with('error', 'Taxe non trouvée.');
         }
-        
+
         $oldData = $tax->toArray();
-        
+
         $tax->vendor_id = $vendor_id;
         $tax->name = $request->validated('name');
         $tax->type = $request->validated('type');
         $tax->tax = $request->validated('tax');
         $tax->update();
-        
+
         // Audit log pour la modification de taxe
         AuditService::logAdminAction(
             'UPDATE_TAX',
@@ -90,18 +90,18 @@ class TaxController extends Controller
             ],
             $tax->id
         );
-        
+
         return redirect('admin/tax')->with('success', trans('messages.success'));
     }
     public function change_status(StatusChangeRequest $request)
     {
         $affected = Tax::where('id', $request->validated('id'))
             ->update(['is_available' => $request->validated('status')]);
-            
+
         if ($affected === 0) {
             return redirect('admin/tax')->with('error', 'Taxe non trouvée.');
         }
-        
+
         // Audit log pour le changement de statut
         AuditService::logAdminAction(
             'CHANGE_TAX_STATUS',
@@ -112,7 +112,7 @@ class TaxController extends Controller
             ],
             $request->validated('id')
         );
-        
+
         return redirect('admin/tax')->with('success', trans('messages.success'));
     }
     public function delete(Request $request)
@@ -170,5 +170,5 @@ class TaxController extends Controller
         }
         return response()->json(['status' => 1, 'msg' => trans('messages.success')], 200);
     }
-  
+
 }

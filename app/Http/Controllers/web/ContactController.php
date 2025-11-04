@@ -22,7 +22,7 @@ class ContactController extends Controller
     public function contact(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -61,7 +61,7 @@ class ContactController extends Controller
         }
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -130,7 +130,7 @@ class ContactController extends Controller
         }
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -176,7 +176,7 @@ class ContactController extends Controller
     public function tableBook(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -221,7 +221,7 @@ class ContactController extends Controller
         }
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -285,7 +285,7 @@ class ContactController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'time_slots' => []]);
         }
@@ -297,16 +297,16 @@ class ContactController extends Controller
 
         while ($start->lte($end)) {
             $timeString = $start->format('H:i');
-            
+
             // Check if this time slot is available
             $isAvailable = $this->checkTimeSlotAvailability($request->date, $timeString, $vdata);
-            
+
             $timeSlots[] = [
                 'time' => $timeString,
                 'display' => $start->format('H:i'),
                 'available' => $isAvailable
             ];
-            
+
             $start->addMinutes(30);
         }
 

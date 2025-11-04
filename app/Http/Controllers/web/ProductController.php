@@ -21,7 +21,7 @@ class ProductController extends Controller
     public function details(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -37,7 +37,7 @@ class ProductController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         // Get product images
         $itemImages = ItemImages::select([
                 'id', 'image', 'item_id',
@@ -71,13 +71,13 @@ class ProductController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
 
         $searchTerm = strip_tags($request->search);
-        
+
         // Search in items
         $items = Item::with(['variation', 'extras'])
                     ->where('vendor_id', $vdata)
@@ -106,7 +106,7 @@ class ProductController extends Controller
 
         // Regular page request
         $settingdata = helper::appdata($vdata);
-        
+
         return view('front.search-results', compact(
             'settingdata', 'items', 'searchTerm', 'vdata'
         ));
@@ -118,13 +118,13 @@ class ProductController extends Controller
     public function topDeals(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         // Get top deals items
         $topDealsItems = Item::with(['variation', 'extras'])
                             ->where('vendor_id', $vdata)
@@ -136,7 +136,7 @@ class ProductController extends Controller
         // Add cart quantity for each item
         foreach ($topDealsItems as $item) {
             $item->cart_qty = $this->getItemCartQuantity($item->id);
-            
+
             // Add variation cart quantities
             if ($item->variation) {
                 foreach ($item->variation as $variant) {
@@ -158,7 +158,7 @@ class ProductController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -182,7 +182,7 @@ class ProductController extends Controller
         // Add cart quantities
         foreach ($items as $item) {
             $item->cart_qty = $this->getItemCartQuantity($item->id);
-            
+
             if ($item->variation) {
                 foreach ($item->variation as $variant) {
                     $variant->cart_qty = $this->getVariantCartQuantity($variant->id);
@@ -213,7 +213,7 @@ class ProductController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         $item = Item::with(['variation', 'extras'])
                    ->where('id', $request->item_id)
                    ->where('vendor_id', $vdata)
@@ -245,7 +245,7 @@ class ProductController extends Controller
     public function getFeatured(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'items' => []]);
         }
@@ -281,7 +281,7 @@ class ProductController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         $item = Item::where('id', $request->item_id)
                    ->where('vendor_id', $vdata)
                    ->where('is_available', 1)
@@ -310,7 +310,7 @@ class ProductController extends Controller
             }
 
             $requestedTotal = $currentCartQty + $request->qty;
-            
+
             if ($requestedTotal > $maxQty) {
                 $available = false;
                 $message = "Stock insuffisant. Disponible: {$maxQty}, En panier: {$currentCartQty}";

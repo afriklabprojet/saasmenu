@@ -39,6 +39,15 @@ use App\Http\Controllers\Admin\TableBookingController;
 use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Auth\SocialLoginController;
 
+// 🔄 NOUVEAUX CONTRÔLEURS REFACTORISÉS
+use App\Http\Controllers\web\CartController;
+use App\Http\Controllers\web\OrderController as WebOrderController;
+use App\Http\Controllers\web\PromoCodeController;
+use App\Http\Controllers\web\PageController;
+use App\Http\Controllers\web\ContactController as WebContactController;
+use App\Http\Controllers\web\ProductController as WebProductController;
+use App\Http\Controllers\web\RefactoredHomeController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -63,7 +72,7 @@ Route::prefix('auth')->name('social.')->group(function () {
     Route::get('/{provider}/callback', [SocialLoginController::class, 'handleProviderCallback'])->name('callback');
 });
 
-Route::group(['namespace' => 'admin', 'prefix' => 'admin'], function () {
+Route::group(['prefix' => 'admin'], function () {
     Route::get('/', [AdminController::class, 'login']);
     Route::post('checklogin-{logintype}', [AdminController::class, 'check_admin_login']);
     Route::get('register', [VendorController::class, 'register']);
@@ -607,41 +616,61 @@ if (array_key_exists('host', $parsedUrl)) {
     }
 }
 
-Route::post('/product-details', [HomeController::class, 'details'])->name('front.details');
-Route::post('/orders/checkplan', [HomeController::class, 'checkplan'])->name('front.checkplan');
-Route::post('add-to-cart', [HomeController::class, 'addtocart'])->name('front.addtocart');
-Route::post('/cart/qtyupdate', [HomeController::class, 'qtyupdate'])->name('front.qtyupdate');
-Route::post('/cart/deletecartitem', [HomeController::class, 'deletecartitem'])->name('front.deletecartitem');
-Route::post('/orders/paymentmethod', [HomeController::class, 'paymentmethod'])->name('front.whatsapporder');
+// 🔄 ROUTES REFACTORISÉES - REMPLACENT L'ANCIEN HomeController
+
+// Routes produits
+Route::post('/product-details', [WebProductController::class, 'details'])->name('front.details');
+
+// Routes commandes
+Route::post('/orders/checkplan', [RefactoredHomeController::class, 'checkPlan'])->name('front.checkplan');
+Route::post('/orders/paymentmethod', [WebOrderController::class, 'create'])->name('front.whatsapporder');
+
+// Routes panier (nouvelles)
+Route::post('add-to-cart', [CartController::class, 'addToCart'])->name('front.addtocart');
+Route::post('/cart/qtyupdate', [CartController::class, 'updateQuantity'])->name('front.qtyupdate');
+Route::post('/cart/deletecartitem', [CartController::class, 'removeItem'])->name('front.deletecartitem');
 
 Route::get('lang/change', [LangController::class, 'change'])->name('changeLang');
-Route::post('/changeqty', [HomeController::class, 'changeqty']);
-Route::get('get-products-variant-quantity', [HomeController::class, 'getProductsVariantQuantity']);
-Route::group(['namespace' => "front", 'prefix' => $prefix, 'middleware' => 'FrontMiddleware'], function () {
 
-    Route::get('/', [HomeController::class, 'index'])->name('front.home');
-    Route::get('/categories', [HomeController::class, 'categories'])->name('front.categories');
-    Route::get('/product/{id}', [HomeController::class, 'show'])->name('front.product');
-    Route::get('/cart', [HomeController::class, 'cart'])->name('front.cart');
-    Route::get('/checkout', [HomeController::class, 'checkout'])->name('front.checkout');
-    Route::get('/search', [HomeController::class, 'search']);
+// Routes panier supplémentaires
+Route::post('/changeqty', [CartController::class, 'updateQuantity']);
+Route::get('get-products-variant-quantity', [WebProductController::class, 'getVariations']);
 
-    Route::get('/cancel-order/{ordernumber}', [HomeController::class, 'cancelorder'])->name('front.cancelorder');
-    // third party suucess route
-    Route::any('/payment', [HomeController::class, 'ordercreate']);
+Route::group(['prefix' => $prefix, 'middleware' => 'FrontMiddleware'], function () {
 
-    Route::get('/terms', [HomeController::class, 'terms'])->name('front.terms');
-    Route::get('/privacy-policy', [HomeController::class, 'privacy'])->name('front.privacy');
-    Route::get('/book', [HomeController::class, 'book'])->name('front.book');
-    Route::get('/track-order/{ordernumber}', [HomeController::class, 'trackorder'])->name('front.trackorder');
-    Route::get('/success', [HomeController::class, 'trackorder'])->name('front.success');
-    Route::get('/success/{order_number}', [HomeController::class, 'ordersuccess']);
-    Route::get('/privacypolicy', [HomeController::class, 'privacyshow']);
-    Route::get('/refundprivacypolicy', [HomeController::class, 'refundprivacypolicy']);
-    Route::get('/terms_condition', [HomeController::class, 'terms_condition']);
-    Route::get('/aboutus', [HomeController::class, 'aboutus']);
-    Route::post('/timeslot', [HomeController::class, 'timeslot']);
-    Route::post('/subscribe', [HomeController::class, 'user_subscribe']);
+    // 🏠 PAGE D'ACCUEIL ET NAVIGATION
+    Route::get('/', [RefactoredHomeController::class, 'index'])->name('front.home');
+    Route::get('/categories', [RefactoredHomeController::class, 'categories'])->name('front.categories');
+
+    // 🛒 PANIER ET PRODUITS
+    Route::get('/product/{id}', [WebProductController::class, 'details'])->name('front.product');
+    Route::get('/cart', [CartController::class, 'cart'])->name('front.cart');
+    Route::get('/search', [WebProductController::class, 'search']);
+
+    // 📦 COMMANDES
+    Route::get('/checkout', [WebOrderController::class, 'checkout'])->name('front.checkout');
+    Route::get('/cancel-order/{ordernumber}', [WebOrderController::class, 'cancel'])->name('front.cancelorder');
+    Route::any('/payment', [WebOrderController::class, 'create']);
+
+    // 📄 PAGES STATIQUES
+    Route::get('/terms', [PageController::class, 'termsConditions'])->name('front.terms');
+    Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('front.privacy');
+    Route::get('/privacypolicy', [PageController::class, 'privacyPolicy']);
+    Route::get('/refundprivacypolicy', [PageController::class, 'refundPrivacyPolicy']);
+    Route::get('/terms_condition', [PageController::class, 'termsConditions']);
+    Route::get('/aboutus', [PageController::class, 'aboutUs']);
+
+    // 📞 CONTACT ET RÉSERVATIONS
+    Route::get('/book', [WebContactController::class, 'tableBook'])->name('front.book');
+    Route::post('/subscribe', [WebContactController::class, 'subscribe']);
+
+    // 📦 COMMANDES ET SUIVI
+    Route::get('/track-order/{ordernumber}', [WebOrderController::class, 'track'])->name('front.trackorder');
+    Route::get('/success', [WebOrderController::class, 'track'])->name('front.success');
+    Route::get('/success/{order_number}', [WebOrderController::class, 'success']);
+
+    // ⏰ HORAIRES ET AUTRES
+    Route::post('/timeslot', [RefactoredHomeController::class, 'getTimeslot']);
 
 
     Route::get('/login', [WebUserController::class, 'user_login']);
@@ -663,17 +692,18 @@ Route::group(['namespace' => "front", 'prefix' => $prefix, 'middleware' => 'Fron
     Route::get('/orders', [WebUserController::class, 'orders']);
     Route::get('/loyality', [WebUserController::class, 'loyality']);
 
-    //CONTACTS
-    Route::get('/contact', [HomeController::class, 'contact']);
-    Route::post('/submit', [HomeController::class, 'save_contact']);
+    //CONTACTS - REFACTORISÉ
+    Route::get('/contact', [WebContactController::class, 'contact']);
+    Route::post('/submit', [WebContactController::class, 'saveContact']);
 
 
-    //CONTACTS
-    Route::get('/tablebook', [HomeController::class, 'table_book']);
-    Route::post('/book', [HomeController::class, 'save_booking']);
+    //RÉSERVATIONS DE TABLES - REFACTORISÉ
+    Route::get('/tablebook', [WebContactController::class, 'tableBook']);
+    Route::post('/book', [WebContactController::class, 'saveBooking']);
 
-    Route::get('/terms_condition', [HomeController::class, 'terms_condition']);
-    Route::get('/privacypolicy', [HomeController::class, 'privacyshow']);
+    // PAGES REDONDANTES (déjà définies plus haut)
+    Route::get('/terms_condition', [PageController::class, 'termsConditions']);
+    Route::get('/privacypolicy', [PageController::class, 'privacyPolicy']);
 
     // favorite
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('user-favouritelist');
@@ -681,7 +711,39 @@ Route::group(['namespace' => "front", 'prefix' => $prefix, 'middleware' => 'Fron
 
     Route::get('/delete-password', [WebUserController::class, 'deletepassword']);
     Route::get('/deleteaccount', [WebUserController::class, 'deleteaccount']);
-    Route::get('/topdeals', [HomeController::class, 'alltopdeals']);
+
+    // PRODUITS - REFACTORISÉ
+    Route::get('/topdeals', [WebProductController::class, 'topDeals']);
+
+    // 🆕 NOUVELLES ROUTES API REFACTORISÉES
+    // Routes AJAX pour fonctionnalités avancées
+    Route::prefix('api')->group(function () {
+        // Panier API
+        Route::post('/cart/add', [CartController::class, 'addToCart'])->name('api.cart.add');
+        Route::patch('/cart/update', [CartController::class, 'updateQuantity'])->name('api.cart.update');
+        Route::delete('/cart/remove', [CartController::class, 'removeItem'])->name('api.cart.remove');
+
+        // Codes promo API
+        Route::post('/promo/apply', [PromoCodeController::class, 'apply'])->name('api.promo.apply');
+        Route::delete('/promo/remove', [PromoCodeController::class, 'remove'])->name('api.promo.remove');
+        Route::get('/promo/available', [PromoCodeController::class, 'getAvailable'])->name('api.promo.available');
+
+        // Produits API
+        Route::get('/products/category/{category_id}', [WebProductController::class, 'getByCategory'])->name('api.products.category');
+        Route::get('/products/{item_id}/variations', [WebProductController::class, 'getVariations'])->name('api.products.variations');
+        Route::post('/products/check-availability', [WebProductController::class, 'checkAvailability'])->name('api.products.availability');
+        Route::get('/products/featured', [WebProductController::class, 'getFeatured'])->name('api.products.featured');
+
+        // Commandes API
+        Route::post('/orders/track', [WebOrderController::class, 'track'])->name('api.orders.track');
+
+        // Contact API
+        Route::get('/booking/timeslots', [WebContactController::class, 'getAvailableTimeSlots'])->name('api.booking.timeslots');
+
+        // Pages API
+        Route::post('/pages/content', [PageController::class, 'getPageContent'])->name('api.pages.content');
+        Route::get('/pages/available', [PageController::class, 'getAvailablePages'])->name('api.pages.available');
+    });
 
     // CinetPay routes
     Route::get('/cinetpay/return', [CinetPayController::class, 'return'])->name('cinetpay.return');

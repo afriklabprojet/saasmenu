@@ -19,7 +19,7 @@ class PageController extends Controller
     public function aboutUs(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -40,7 +40,7 @@ class PageController extends Controller
     public function termsConditions(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -61,7 +61,7 @@ class PageController extends Controller
     public function privacyPolicy(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -82,7 +82,7 @@ class PageController extends Controller
     public function refundPrivacyPolicy(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
@@ -107,7 +107,7 @@ class PageController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -120,19 +120,19 @@ class PageController extends Controller
                                ->select(['about_content', 'updated_at'])
                                ->first();
                 break;
-                
+
             case 'terms':
                 $content = Terms::where('vendor_id', $vdata)
                                ->select(['terms_content', 'updated_at'])
                                ->first();
                 break;
-                
+
             case 'privacy':
                 $content = Privacypolicy::where('vendor_id', $vdata)
                                       ->select(['privacy_content', 'updated_at'])
                                       ->first();
                 break;
-                
+
             case 'refund':
                 $content = RefundPrivacypolicy::where('vendor_id', $vdata)
                                             ->select(['refund_content', 'updated_at'])
@@ -161,7 +161,7 @@ class PageController extends Controller
         ]);
 
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'available' => false]);
         }
@@ -172,15 +172,15 @@ class PageController extends Controller
             case 'about':
                 $exists = About::where('vendor_id', $vdata)->exists();
                 break;
-                
+
             case 'terms':
                 $exists = Terms::where('vendor_id', $vdata)->exists();
                 break;
-                
+
             case 'privacy':
                 $exists = Privacypolicy::where('vendor_id', $vdata)->exists();
                 break;
-                
+
             case 'refund':
                 $exists = RefundPrivacypolicy::where('vendor_id', $vdata)->exists();
                 break;
@@ -198,7 +198,7 @@ class PageController extends Controller
     public function getAvailablePages(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'pages' => []]);
         }

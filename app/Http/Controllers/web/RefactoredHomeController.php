@@ -22,13 +22,13 @@ class RefactoredHomeController extends Controller
     public function index(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/select-restaurant')->with('error', 'Veuillez sélectionner un restaurant');
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         if (!$settingdata) {
             return redirect('/select-restaurant')->with('error', 'Restaurant non trouvé');
         }
@@ -73,7 +73,7 @@ class RefactoredHomeController extends Controller
                        ->get();
 
         return view('front.home', compact(
-            'settingdata', 'banners', 'categories', 'featuredItems', 
+            'settingdata', 'banners', 'categories', 'featuredItems',
             'topDeals', 'vdata', 'timing', 'isOpen'
         ));
     }
@@ -84,13 +84,13 @@ class RefactoredHomeController extends Controller
     public function categories(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         // Get categories with item count
         $categories = Category::withCount(['items' => function($query) {
                           $query->where('is_available', 1);
@@ -109,7 +109,7 @@ class RefactoredHomeController extends Controller
     public function getTimeslot(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
@@ -132,32 +132,32 @@ class RefactoredHomeController extends Controller
     public function checkPlan(Request $request)
     {
         $vdata = Session::get('restaurant_id');
-        
+
         if (empty($vdata)) {
             return response()->json(['status' => 0, 'message' => 'Restaurant non sélectionné'], 400);
         }
 
         $planInfo = helper::getPlanInfo($vdata);
-        
+
         if (!$planInfo) {
             return response()->json(['status' => 0, 'message' => 'Plan non trouvé'], 404);
         }
 
         // Check various limits based on current plan
         $limits = [
-            'orders_limit' => $planInfo->order_limit ?? -1,
-            'users_limit' => $planInfo->user_limit ?? -1,
-            'custom_domain' => $planInfo->custom_domain ?? 0,
-            'whatsapp_message' => $planInfo->whatsapp_message ?? 0,
-            'google_analytics' => $planInfo->google_analytics ?? 0,
-            'vendor_app' => $planInfo->vendor_app ?? 0,
-            'delivery_app' => $planInfo->delivery_app ?? 0,
-            'pos' => $planInfo->pos ?? 0,
+            'orders_limit' => $planInfo['order_limit'] ?? -1,
+            'users_limit' => $planInfo['staff_limit'] ?? -1,
+            'custom_domain' => $planInfo['custom_domain'] ?? 0,
+            'whatsapp_message' => $planInfo['whatsapp_integration'] ?? 0,
+            'google_analytics' => $planInfo['analytics'] ?? 0,
+            'vendor_app' => 0, // Cette propriété n'existe pas dans getPlanInfo
+            'delivery_app' => 0, // Cette propriété n'existe pas dans getPlanInfo
+            'pos' => 0, // Cette propriété n'existe pas dans getPlanInfo
         ];
 
         return response()->json([
             'status' => 1,
-            'plan_name' => $planInfo->name,
+            'plan_name' => $planInfo['plan_name'],
             'limits' => $limits
         ]);
     }
