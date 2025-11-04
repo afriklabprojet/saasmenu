@@ -188,6 +188,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\LocalizationServiceProvider::class,
+        App\Providers\RepositoryServiceProvider::class,
 
         Spatie\Analytics\AnalyticsServiceProvider::class,
 

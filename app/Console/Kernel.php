@@ -188,6 +188,58 @@ class Kernel extends ConsoleKernel
                  ->at('07:00')
                  ->onOneServer();
 
+        // ========================================
+        // Advanced Monitoring & Logging Tasks
+        // ========================================
+
+        // Surveillance santé système (haute fréquence)
+        $schedule->command('monitoring:health-check')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping(3)
+                 ->onOneServer()
+                 ->runInBackground();
+
+        // Surveillance santé avec alertes (fréquence normale)
+        $schedule->command('monitoring:health-check --alert')
+                 ->everyThirtyMinutes()
+                 ->withoutOverlapping(5)
+                 ->onOneServer()
+                 ->emailOutputOnFailure('admin@restro-saas.com');
+
+        // Nettoyage automatique des logs (quotidien)
+        $schedule->command('monitoring:cleanup --days=30')
+                 ->daily()
+                 ->at('02:30')
+                 ->onOneServer()
+                 ->emailOutputOnFailure('admin@restro-saas.com');
+
+        // Nettoyage approfondi des logs (hebdomadaire)
+        $schedule->command('monitoring:cleanup --days=7')
+                 ->weekly()
+                 ->sundays()
+                 ->at('03:00')
+                 ->onOneServer();
+
+        // Réchauffement du cache système (matin)
+        $schedule->command('cache:warmup')
+                 ->dailyAt('06:00')
+                 ->onOneServer()
+                 ->runInBackground();
+
+        // Statistiques de cache (toutes les heures)
+        $schedule->command('cache:stats')
+                 ->hourly()
+                 ->withoutOverlapping(10)
+                 ->onOneServer()
+                 ->runInBackground();
+
+        // Optimisation base de données (hebdomadaire)
+        $schedule->command('db:optimize')
+                 ->weekly()
+                 ->sundays()
+                 ->at('04:00')
+                 ->onOneServer();
+
         // API Rate Limit Reset
         $schedule->command('addons:reset-rate-limits')
                  ->hourly()

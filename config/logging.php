@@ -149,6 +149,46 @@ return [
             'level' => env('LOG_LEVEL', 'critical'),
         ],
 
+        // Canal pour les métriques de monitoring système
+        'metrics' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/metrics.log'),
+            'level' => 'info',
+            'days' => 30,
+        ],
+
+        // Canal pour les alertes système
+        'alerts' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/alerts.log'),
+            'level' => 'warning',
+            'days' => 60,
+        ],
+
+        // Canal pour l'activité utilisateur
+        'activity' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/activity.log'),
+            'level' => 'info',
+            'days' => 90,
+        ],
+
+        // Canal pour les erreurs système
+        'errors' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/errors.log'),
+            'level' => 'error',
+            'days' => 60,
+        ],
+
+        // Canal pour le monitoring général
+        'monitoring' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/monitoring.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
+
         'papertrail' => [
             'driver' => 'monolog',
             'level' => env('LOG_LEVEL', 'debug'),

@@ -1,0 +1,18 @@
+includes:
+    - vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - app/
+
+    excludePaths:
+        - app/Console/Kernel.php
+
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder::.*#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$.*#'
+        - '#Method .* has no return typehint specified#'

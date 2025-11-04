@@ -8,6 +8,7 @@ use App\Models\Item;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Admin\TaxRequest;
 use App\Http\Requests\Admin\StatusChangeRequest;
+use App\Http\Requests\Admin\TaxActionRequest;
 use App\Services\AuditService;
 use DB;
 class TaxController extends Controller
@@ -53,9 +54,9 @@ class TaxController extends Controller
 
         return redirect('admin/tax/')->with('success', trans('messages.success'));
     }
-    public function edit(Request $request)
+    public function edit(TaxActionRequest $request)
     {
-        $edittax = Tax::where('id', $request->id)->first();
+        $edittax = Tax::where('id', $request->validated('id'))->first();
         return view('admin.tax.edit', compact("edittax"));
     }
     public function update(TaxRequest $request)
@@ -115,14 +116,14 @@ class TaxController extends Controller
 
         return redirect('admin/tax')->with('success', trans('messages.success'));
     }
-    public function delete(Request $request)
+    public function delete(TaxActionRequest $request)
     {
         if (Auth::user()->type == 4) {
             $vendor_id = Auth::user()->vendor_id;
         } else {
             $vendor_id = Auth::user()->id;
         }
-        $checktax = Tax::where('id', $request->id)->first();
+        $checktax = Tax::where('id', $request->validated('id'))->first();
         if(Auth::user()->type == 1)
         {
             // SÉCURISÉ: Utilisation de paramètres liés pour éviter l'injection SQL
