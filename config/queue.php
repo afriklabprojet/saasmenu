@@ -42,6 +42,42 @@ return [
             'after_commit' => false,
         ],
 
+        // Queue haute priorité pour WhatsApp
+        'whatsapp' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'whatsapp',
+            'retry_after' => 30,
+            'after_commit' => false,
+        ],
+
+        // Queue pour analytics
+        'analytics' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'analytics',
+            'retry_after' => 120,
+            'after_commit' => false,
+        ],
+
+        // Queue pour emails
+        'emails' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'emails',
+            'retry_after' => 60,
+            'after_commit' => false,
+        ],
+
+        // Queue pour cache warming
+        'cache' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'cache',
+            'retry_after' => 180,
+            'after_commit' => false,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => 'localhost',

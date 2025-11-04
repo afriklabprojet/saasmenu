@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ApiDocumentationController;
 use App\Http\Controllers\Api\PosApiController;
 use App\Http\Controllers\Api\LoyaltyApiController;
 use App\Http\Controllers\Api\TableQrApiController;
+use App\Http\Controllers\Performance\PerformanceTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,15 @@ use App\Http\Controllers\Api\TableQrApiController;
 | Toutes les routes sont protégées par authentification sauf les routes publiques.
 |
 */
+
+// Routes Performance Testing (pour développement)
+Route::prefix('performance')->group(function () {
+    Route::post('/web-vitals', [PerformanceTestController::class, 'recordWebVitals']);
+    Route::get('/asset-speed', [PerformanceTestController::class, 'testAssetSpeed']);
+    Route::get('/benchmark', [PerformanceTestController::class, 'benchmarkWebVitals']);
+    Route::get('/images', [PerformanceTestController::class, 'testImageOptimization']);
+    Route::get('/report', [PerformanceTestController::class, 'performanceReport']);
+});
 
 // Route de test API
 Route::get('/test', function () {
@@ -238,4 +248,33 @@ Route::middleware(['auth:sanctum'])->prefix('whatsapp')->group(function () {
     Route::get('/statistics', [\App\Http\Controllers\WhatsAppController::class, 'getStatistics']);
     Route::get('/messages/history', [\App\Http\Controllers\WhatsAppController::class, 'getMessageHistory']);
     Route::post('/messages/{messageId}/retry', [\App\Http\Controllers\WhatsAppController::class, 'retryMessage']);
+});
+
+// Routes pour démonstration système deferred équivalent Laravel 12
+Route::prefix('v1')->group(function() {
+    Route::post('/orders/optimized', [\App\Http\Controllers\Api\OptimizedOrderController::class, 'store'])->name('orders.optimized');
+    Route::get('/queue/stats', [\App\Http\Controllers\Api\OptimizedOrderController::class, 'queueStats'])->name('queue.stats');
+});
+
+// Routes Analytics & Business Intelligence
+Route::prefix('analytics')->group(function() {
+    Route::get('/dashboard/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'dashboard'])->name('analytics.dashboard');
+    Route::get('/revenue/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'revenue'])->name('analytics.revenue');
+    Route::get('/products/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'products'])->name('analytics.products');
+    Route::get('/customers/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'customers'])->name('analytics.customers');
+    Route::get('/insights/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'insights'])->name('analytics.insights');
+    Route::get('/realtime/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'realtime'])->name('analytics.realtime');
+    Route::get('/export/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'export'])->name('analytics.export');
+    Route::get('/compare/{vendorId}', [\App\Http\Controllers\Api\AnalyticsController::class, 'compare'])->name('analytics.compare');
+});
+
+// Routes Dashboard Widgets
+Route::middleware(['auth:sanctum'])->prefix('dashboard-widgets')->group(function() {
+    Route::get('/', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'getWidgets'])->name('widgets.all');
+    Route::get('/by-type', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'getWidgetsByType'])->name('widgets.by-type');
+    Route::get('/config', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'getDashboardConfig'])->name('widgets.config');
+    Route::post('/refresh', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'refreshWidgets'])->name('widgets.refresh');
+    Route::get('/realtime-metrics', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'getRealTimeMetrics'])->name('widgets.realtime');
+    Route::get('/export', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'exportDashboard'])->name('widgets.export');
+    Route::get('/performance-history', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'getPerformanceHistory'])->name('widgets.history');
 });
