@@ -6,6 +6,9 @@ use App\Models\Tax;
 use App\Models\PricingPlan;
 use App\Models\Item;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\Admin\TaxRequest;
+use App\Http\Requests\Admin\StatusChangeRequest;
+use App\Services\AuditService;
 use DB;
 class TaxController extends Controller
 {
@@ -23,21 +26,31 @@ class TaxController extends Controller
     {
         return view('admin.tax.add');
     }
-    public function save(Request $request)
+    public function save(TaxRequest $request)
     {
         if (Auth::user()->type == 4) {
             $vendor_id = Auth::user()->vendor_id;
         } else {
             $vendor_id = Auth::user()->id;
         }
+        
         $tax = new Tax();
         $tax->vendor_id = $vendor_id;
-        $tax->name = $request->name;
-        $tax->type = $request->type;
-        $tax->tax = $request->tax;
+        $tax->name = $request->validated('name');
+        $tax->type = $request->validated('type');
+        $tax->tax = $request->validated('tax');
         $tax->is_available = 1;
         $tax->is_deleted = 2;
         $tax->save();
+        
+        // Audit log pour la création de taxe
+        AuditService::logAdminAction(
+            'CREATE_TAX',
+            'Tax',
+            $request->validated(),
+            $tax->id
+        );
+        
         return redirect('admin/tax/')->with('success', trans('messages.success'));
     }
     public function edit(Request $request)
@@ -45,24 +58,61 @@ class TaxController extends Controller
         $edittax = Tax::where('id', $request->id)->first();
         return view('admin.tax.edit', compact("edittax"));
     }
-    public function update(Request $request)
+    public function update(TaxRequest $request)
     {
         if (Auth::user()->type == 4) {
             $vendor_id = Auth::user()->vendor_id;
         } else {
             $vendor_id = Auth::user()->id;
         }
-        $tax = Tax::where('id', $request->id)->first();
+        
+        $tax = Tax::where('id', $request->validated('id'))->first();
+        
+        if (!$tax) {
+            return redirect('admin/tax')->with('error', 'Taxe non trouvée.');
+        }
+        
+        $oldData = $tax->toArray();
+        
         $tax->vendor_id = $vendor_id;
-        $tax->name = $request->name;
-        $tax->type = $request->type;
-        $tax->tax = $request->tax;
+        $tax->name = $request->validated('name');
+        $tax->type = $request->validated('type');
+        $tax->tax = $request->validated('tax');
         $tax->update();
+        
+        // Audit log pour la modification de taxe
+        AuditService::logAdminAction(
+            'UPDATE_TAX',
+            'Tax',
+            [
+                'old_data' => $oldData,
+                'new_data' => $request->validated()
+            ],
+            $tax->id
+        );
+        
         return redirect('admin/tax')->with('success', trans('messages.success'));
     }
-    public function change_status(Request $request)
+    public function change_status(StatusChangeRequest $request)
     {
-        Tax::where('id', $request->id)->update(['is_available' => $request->status]);
+        $affected = Tax::where('id', $request->validated('id'))
+            ->update(['is_available' => $request->validated('status')]);
+            
+        if ($affected === 0) {
+            return redirect('admin/tax')->with('error', 'Taxe non trouvée.');
+        }
+        
+        // Audit log pour le changement de statut
+        AuditService::logAdminAction(
+            'CHANGE_TAX_STATUS',
+            'Tax',
+            [
+                'tax_id' => $request->validated('id'),
+                'new_status' => $request->validated('status')
+            ],
+            $request->validated('id')
+        );
+        
         return redirect('admin/tax')->with('success', trans('messages.success'));
     }
     public function delete(Request $request)
@@ -75,7 +125,8 @@ class TaxController extends Controller
         $checktax = Tax::where('id', $request->id)->first();
         if(Auth::user()->type == 1)
         {
-            $getplan = PricingPlan::where(DB::Raw("FIND_IN_SET($checktax->id, replace(tax, '|', ','))"), '>', 0)->get();
+            // SÉCURISÉ: Utilisation de paramètres liés pour éviter l'injection SQL
+            $getplan = PricingPlan::whereRaw("FIND_IN_SET(?, REPLACE(tax, '|', ',')) > 0", [$checktax->id])->get();
             foreach($getplan as $plan)
             {
                 $tax_id = explode('|', $plan->tax);
@@ -87,7 +138,8 @@ class TaxController extends Controller
             }
         }
         else{
-            $getproduct = Item::where(DB::Raw("FIND_IN_SET($checktax->id, replace(tax, '|', ','))"), '>', 0)->get();
+            // SÉCURISÉ: Utilisation de paramètres liés pour éviter l'injection SQL
+            $getproduct = Item::whereRaw("FIND_IN_SET(?, REPLACE(tax, '|', ',')) > 0", [$checktax->id])->get();
             foreach($getproduct as $product)
             {
                 $tax = explode('|', $product->tax);

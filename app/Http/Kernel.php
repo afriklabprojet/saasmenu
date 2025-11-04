@@ -44,8 +44,8 @@ class Kernel extends HttpKernel
 
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
 
-        // Middleware de sécurité pour production - TEMPORAIREMENT DÉSACTIVÉ
-        // \App\Http\Middleware\SecurityHeaders::class,
+        // Middleware de sécurité pour production - ACTIVÉ pour corriger les vulnérabilités
+        \App\Http\Middleware\SecurityHeaders::class,
 
         // Middleware de notifications temps réel - TEMPORAIREMENT DÉSACTIVÉ (boucle infinie)
         // \App\Http\Middleware\NotificationMiddleware::class,

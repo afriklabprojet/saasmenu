@@ -91,6 +91,30 @@ return [
             'days' => 90,
         ],
 
+        // Canal pour l'audit des actions administrateur
+        'audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/audit.log'),
+            'level' => 'info',
+            'days' => 365, // Conserver 1 an pour conformité
+        ],
+
+        // Canal spécifique pour les transactions de paiement
+        'payment' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payment-transactions.log'),
+            'level' => 'info',
+            'days' => 2555, // 7 ans pour conformité légale
+        ],
+
+        // Canal pour la conformité GDPR
+        'gdpr' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/gdpr.log'),
+            'level' => 'info',
+            'days' => 2555, // 7 ans pour conformité légale
+        ],
+
         // Canal pour les erreurs API
         'api' => [
             'driver' => 'daily',
