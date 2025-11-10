@@ -39,15 +39,38 @@ class AdminController extends Controller
             $totalvendors = User::where('type', 2)->count();
             $totalrevenue = Transaction::where('status',2)->sum('amount');
             $totalorders = Transaction::count('id');
+            
             // DOUGHNUT-CHART-START
-            $doughnut_years = User::select(DB::raw("YEAR(created_at) as year"))->where('type', 2)->groupBy(DB::raw("YEAR(created_at)"))->orderByDesc('created_at')->get();
-            $vendorlist = User::select(DB::raw("YEAR(created_at) as year"), DB::raw("MONTHNAME(created_at) as month_name"), DB::raw("COUNT(id) as total_user"))->whereYear('created_at', $doughnutyear)->where('type', 2)->orderBy('created_at')->groupBy(DB::raw("MONTHNAME(created_at)"))->pluck('total_user', 'month_name');
+            // Security fix: Use selectRaw() instead of DB::raw() for date functions and aggregations
+            $doughnut_years = User::selectRaw('YEAR(created_at) as year')
+                ->where('type', 2)
+                ->groupBy(DB::raw('YEAR(created_at)'))
+                ->orderByDesc('created_at')
+                ->get();
+            
+            $vendorlist = User::selectRaw('YEAR(created_at) as year, MONTHNAME(created_at) as month_name, COUNT(id) as total_user')
+                ->whereYear('created_at', $doughnutyear)
+                ->where('type', 2)
+                ->orderBy('created_at')
+                ->groupBy(DB::raw('MONTHNAME(created_at)'))
+                ->pluck('total_user', 'month_name');
             $doughnutlabels = $vendorlist->keys();
             $doughnutdata = $vendorlist->values();
             // DOUGHNUT-CHART-END
+            
             // revenue-CHART-START
-            $revenue_years = Transaction::select(DB::raw("YEAR(purchase_date) as year"))->groupBy(DB::raw("YEAR(purchase_date)"))->orderByDesc('purchase_date')->get();
-            $revenue_list = Transaction::select(DB::raw("YEAR(purchase_date) as year"), DB::raw("MONTHNAME(purchase_date) as month_name"), DB::raw("SUM(amount) as total_amount"))->whereYear('purchase_date', $revenueyear)->where('status', 2)->orderby('purchase_date')->groupBy(DB::raw("MONTHNAME(purchase_date)"))->pluck('total_amount', 'month_name');
+            // Security fix: Use selectRaw() for all date and aggregate functions
+            $revenue_years = Transaction::selectRaw('YEAR(purchase_date) as year')
+                ->groupBy(DB::raw('YEAR(purchase_date)'))
+                ->orderByDesc('purchase_date')
+                ->get();
+            
+            $revenue_list = Transaction::selectRaw('YEAR(purchase_date) as year, MONTHNAME(purchase_date) as month_name, SUM(amount) as total_amount')
+                ->whereYear('purchase_date', $revenueyear)
+                ->where('status', 2)
+                ->orderBy('purchase_date')
+                ->groupBy(DB::raw('MONTHNAME(purchase_date)'))
+                ->pluck('total_amount', 'month_name');
             $revenuelabels = $revenue_list->keys();
             $revenuedata = $revenue_list->values();
             // revenue-CHART-END

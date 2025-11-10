@@ -349,7 +349,8 @@ class POSAdminController extends Controller
 
     private function getPaymentMethodsStats()
     {
-        return Order::select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(total) as revenue'))
+        // Security fix: Use selectRaw() for aggregations
+        return Order::selectRaw('payment_method, COUNT(*) as count, SUM(total) as revenue')
             ->whereDate('created_at', today())
             ->groupBy('payment_method')
             ->get();
@@ -357,10 +358,11 @@ class POSAdminController extends Controller
 
     private function getTopItems()
     {
+        // Security fix: Use selectRaw() for SUM aggregation
         return DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('items', 'order_items.item_id', '=', 'items.id')
-            ->select('items.item_name', DB::raw('SUM(order_items.quantity) as total_quantity'))
+            ->selectRaw('items.item_name, SUM(order_items.quantity) as total_quantity')
             ->whereDate('orders.created_at', today())
             ->groupBy('items.id', 'items.item_name')
             ->orderBy('total_quantity', 'desc')
@@ -370,8 +372,9 @@ class POSAdminController extends Controller
 
     private function getUserPerformance()
     {
+        // Security fix: Use selectRaw() for COUNT and SUM aggregations
         return User::join('orders', 'users.id', '=', 'orders.user_id')
-            ->select('users.name', DB::raw('COUNT(orders.id) as order_count'), DB::raw('SUM(orders.total) as total_sales'))
+            ->selectRaw('users.name, COUNT(orders.id) as order_count, SUM(orders.total) as total_sales')
             ->whereDate('orders.created_at', today())
             ->groupBy('users.id', 'users.name')
             ->orderBy('total_sales', 'desc')

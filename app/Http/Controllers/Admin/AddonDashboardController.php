@@ -94,8 +94,9 @@ class AddonDashboardController extends Controller
         ];
 
         // Nouveaux membres par mois
+        // Security fix: Use selectRaw() for DATE_FORMAT and COUNT
         $newMembersChart = LoyaltyMember::where('restaurant_id', $restaurant->id)
-            ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('COUNT(*) as count'))
+            ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
             ->groupBy('month')
             ->orderBy('month')
             ->take(12)
@@ -192,16 +193,18 @@ class AddonDashboardController extends Controller
     private function getChartsData($restaurant)
     {
         // Revenus des 7 derniers jours
+        // Security fix: Use selectRaw() for DATE and SUM functions
         $dailyRevenue = Order::where('restaurant_id', $restaurant->id)
             ->where('created_at', '>=', now()->subDays(7))
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total_amount) as total'))
+            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
         // Commandes par source
+        // Security fix: Use selectRaw() for COUNT aggregation
         $ordersBySource = Order::where('restaurant_id', $restaurant->id)
-            ->select('order_source', DB::raw('COUNT(*) as count'))
+            ->selectRaw('order_source, COUNT(*) as count')
             ->groupBy('order_source')
             ->get();
 
