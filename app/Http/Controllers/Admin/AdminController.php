@@ -39,7 +39,7 @@ class AdminController extends Controller
             $totalvendors = User::where('type', 2)->count();
             $totalrevenue = Transaction::where('status',2)->sum('amount');
             $totalorders = Transaction::count('id');
-            
+
             // DOUGHNUT-CHART-START
             // Security fix: Use selectRaw() instead of DB::raw() for date functions and aggregations
             $doughnut_years = User::selectRaw('YEAR(created_at) as year')
@@ -47,7 +47,7 @@ class AdminController extends Controller
                 ->groupBy(DB::raw('YEAR(created_at)'))
                 ->orderByDesc('created_at')
                 ->get();
-            
+
             $vendorlist = User::selectRaw('YEAR(created_at) as year, MONTHNAME(created_at) as month_name, COUNT(id) as total_user')
                 ->whereYear('created_at', $doughnutyear)
                 ->where('type', 2)
@@ -57,14 +57,14 @@ class AdminController extends Controller
             $doughnutlabels = $vendorlist->keys();
             $doughnutdata = $vendorlist->values();
             // DOUGHNUT-CHART-END
-            
+
             // revenue-CHART-START
             // Security fix: Use selectRaw() for all date and aggregate functions
             $revenue_years = Transaction::selectRaw('YEAR(purchase_date) as year')
                 ->groupBy(DB::raw('YEAR(purchase_date)'))
                 ->orderByDesc('purchase_date')
                 ->get();
-            
+
             $revenue_list = Transaction::selectRaw('YEAR(purchase_date) as year, MONTHNAME(purchase_date) as month_name, SUM(amount) as total_amount')
                 ->whereYear('purchase_date', $revenueyear)
                 ->where('status', 2)
