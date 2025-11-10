@@ -91,17 +91,24 @@ class HomeController extends Controller
         $getcategory = Category::where('vendor_id', $vdata)->where('is_available', '=', '1')->where('is_deleted', '2')->orderBy('reorder_id')->get();
         if (Auth::user() && Auth::user()->type == 3) {
             $user_id = Auth::user()->id;
-            $getitem = Item::with(['variation', 'extras', 'item_image'])->select('items.*', DB::raw('(case when favorite.item_id is null then 0 else 1 end) as is_favorite'))
-                ->leftJoin('favorite', function ($query) use ($user_id) {
-                    $query->on('favorite.item_id', '=', 'items.id')
-                        ->where('favorite.user_id', '=', $user_id);
-                })->where('items.top_deals', '!=', '1')->where('items.vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id', 'ASC')->get();
+            // Security fix: Use selectRaw with COALESCE instead of CASE WHEN in DB::raw
+            $getitem = Item::with(['variation', 'extras', 'item_image'])
+                ->select('items.*')
+                ->selectRaw('COALESCE((SELECT 1 FROM favorite WHERE favorite.item_id = items.id AND favorite.user_id = ? LIMIT 1), 0) as is_favorite', [$user_id])
+                ->where('items.top_deals', '!=', '1')
+                ->where('items.vendor_id', $vdata)
+                ->where('is_available', '1')
+                ->orderBy('reorder_id', 'ASC')
+                ->get();
 
-            $topdealsproducts = Item::with(['variation', 'extras', 'item_image'])->select('items.*', DB::raw('(case when favorite.item_id is null then 0 else 1 end) as is_favorite'))
-                ->leftJoin('favorite', function ($query) use ($user_id) {
-                    $query->on('favorite.item_id', '=', 'items.id')
-                        ->where('favorite.user_id', '=', $user_id);
-                })->where('items.top_deals', '1')->where('items.vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id', 'ASC')->get();
+            $topdealsproducts = Item::with(['variation', 'extras', 'item_image'])
+                ->select('items.*')
+                ->selectRaw('COALESCE((SELECT 1 FROM favorite WHERE favorite.item_id = items.id AND favorite.user_id = ? LIMIT 1), 0) as is_favorite', [$user_id])
+                ->where('items.top_deals', '1')
+                ->where('items.vendor_id', $vdata)
+                ->where('is_available', '1')
+                ->orderBy('reorder_id', 'ASC')
+                ->get();
         } else {
             $getitem = Item::with(['variation', 'extras', 'item_image'])->where('items.top_deals', '!=', '1')->where('vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id')->get();
             $topdealsproducts = Item::with(['variation', 'extras', 'item_image'])->where('items.top_deals', '1')->where('vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id')->get();
@@ -147,11 +154,14 @@ class HomeController extends Controller
         $getcategory = Category::where('vendor_id', $vdata)->where('is_available', '=', '1')->where('is_deleted', '2')->orderBy('reorder_id', 'ASC')->get();
         if (Auth::user() && Auth::user()->type == 3) {
             $user_id = Auth::user()->id;
-            $getitem = Item::with(['variation', 'extras', 'item_image'])->select('items.*', DB::raw('(case when favorite.item_id is null then 0 else 1 end) as is_favorite'))
-                ->leftJoin('favorite', function ($query) use ($user_id) {
-                    $query->on('favorite.item_id', '=', 'items.id')
-                        ->where('favorite.user_id', '=', $user_id);
-                })->where('items.vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id', 'ASC')->get();
+            // Security fix: Use selectRaw with COALESCE and bound parameters
+            $getitem = Item::with(['variation', 'extras', 'item_image'])
+                ->select('items.*')
+                ->selectRaw('COALESCE((SELECT 1 FROM favorite WHERE favorite.item_id = items.id AND favorite.user_id = ? LIMIT 1), 0) as is_favorite', [$user_id])
+                ->where('items.vendor_id', $vdata)
+                ->where('is_available', '1')
+                ->orderBy('reorder_id', 'ASC')
+                ->get();
         } else {
             $getitem = Item::with(['variation', 'extras', 'item_image'])->where('vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id', 'ASC')->get();
         }
@@ -340,17 +350,18 @@ class HomeController extends Controller
                 $cart->session_id = Session::getId();
             }
 
+            // Security fix: Use selectRaw() instead of DB::raw() for aggregations
             if ($request->variants_name != null && $request->variants_name != "") {
                 if (Auth::user() && Auth::user()->type == 3) {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $variation->id)->where('user_id', Auth::user()->id)->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $variation->id)->where('user_id', Auth::user()->id)->first();
                 } else {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $variation->id)->where('session_id', Session::getId())->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $variation->id)->where('session_id', Session::getId())->first();
                 }
             } else {
                 if (Auth::user() && Auth::user()->type == 3) {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $request->item_id)->where('user_id', Auth::user()->id)->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $request->item_id)->where('user_id', Auth::user()->id)->first();
                 } else {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $request->item_id)->where('session_id', Session::getId())->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $request->item_id)->where('session_id', Session::getId())->first();
                 }
             }
             if ($cartqty->totalqty != null && $cartqty->totalqty != "") {
@@ -473,13 +484,15 @@ class HomeController extends Controller
             $vdata = $storeinfo->vendor_id;
         }
 
+        // Security fix: Use selectRaw with bound parameters instead of DB::raw with concatenation
+        $assetsUrl = url(config('app.assets_path_url', env('ASSETSPATHURL')) . 'item/');
+        
         $getitem = Item::with(['variation', 'extras','item_image'])->select(
             'id',
             'item_original_price',
             'image',
             'description',
             'tax',
-            DB::raw("CONCAT('" . url(env('ASSETSPATHURL') . 'item/') . "/',image) AS image_url"),
             'has_variants',
             'has_extras',
             'variants_json',
@@ -496,9 +509,22 @@ class HomeController extends Controller
             'top_deals'
 
         )->where('id', $request->id)->where('vendor_id', $request->vendor_id)->first();
+        
+        // Add image_url as attribute after query
+        if ($getitem && $getitem->image) {
+            $getitem->image_url = $assetsUrl . '/' . $getitem->image;
+        }
         $getitem->variants_json = json_decode($getitem->variants_json, true);
 
-        $itemimages  = ItemImages::select('id', 'image', 'item_id', DB::raw("CONCAT('" . url(env('ASSETSPATHURL') . 'item/') . "/', image) AS image_url"))->where('item_id', $request->id)->orderBy('reorder_id')->get();
+        // Security fix: Add image_url via accessor instead of DB::raw
+        $itemimages = ItemImages::select('id', 'image', 'item_id')
+            ->where('item_id', $request->id)
+            ->orderBy('reorder_id')
+            ->get()
+            ->map(function($image) use ($assetsUrl) {
+                $image->image_url = $assetsUrl . '/' . $image->image;
+                return $image;
+            });
         App::setLocale(session()->get('locale'));
 
         $topdeals = TopDeals::where('vendor_id', $request->vendor_id)->first();
@@ -589,10 +615,10 @@ class HomeController extends Controller
 
                 if ($variation->stock_management == 1) {
                     if (Auth::user() && Auth::user()->type == 3) {
-                        $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $variation->id)->where('id', '!=', $request->cart_id)->where('user_id', Auth::user()->id)->where('buynow', 0)->first();
+                        $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $variation->id)->where('id', '!=', $request->cart_id)->where('user_id', Auth::user()->id)->where('buynow', 0)->first();
                     } else {
 
-                        $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $variation->id)->where('id', '!=', $request->cart_id)->where('session_id', Session::getId())->where('buynow', 0)->first();
+                        $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $variation->id)->where('id', '!=', $request->cart_id)->where('session_id', Session::getId())->where('buynow', 0)->first();
                     }
 
                     if ($cartqty->totalqty != null && $cartqty->totalqty != "") {
@@ -631,10 +657,10 @@ class HomeController extends Controller
 
                 if ($item->stock_management == 1) {
                     if (Auth::user() && Auth::user()->type == 3) {
-                        $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $item->id)->where('id', '!=', $request->cart_id)->where('user_id', Auth::user()->id)->where('buynow', 0)->first();
+                        $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $item->id)->where('id', '!=', $request->cart_id)->where('user_id', Auth::user()->id)->where('buynow', 0)->first();
                     } else {
 
-                        $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $item->id)->where('id', '!=', $request->cart_id)->where('session_id', Session::getId())->where('buynow', 0)->first();
+                        $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $item->id)->where('id', '!=', $request->cart_id)->where('session_id', Session::getId())->where('buynow', 0)->first();
                     }
 
                     if ($cartqty->totalqty != null && $cartqty->totalqty != "") {
@@ -731,9 +757,9 @@ class HomeController extends Controller
         foreach ($cartdata as $cart) {
             if ($cart->variants_id != "" && $cart->variants_id != null) {
                 if (Auth::user() && Auth::user()->type == 3) {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $cart->variants_id)->where('user_id', Auth::user()->id)->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $cart->variants_id)->where('user_id', Auth::user()->id)->first();
                 } else {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $cart->variants_id)->where('session_id', Session::getId())->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $cart->variants_id)->where('session_id', Session::getId())->first();
                 }
                 $variant = Variants::where('id', $cart->variants_id)->first();
                 $item_name = Item::select('item_name')->where('id', $cart->item_id)->first();
@@ -758,9 +784,9 @@ class HomeController extends Controller
                 $item = Item::where('id', $cart->item_id)->first();
 
                 if (Auth::user() && Auth::user()->type == 3) {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $cart->item_id)->where('user_id', Auth::user()->id)->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $cart->item_id)->where('user_id', Auth::user()->id)->first();
                 } else {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $cart->item_id)->where('session_id', Session::getId())->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $cart->item_id)->where('session_id', Session::getId())->first();
                 }
 
                 if ($item->stock_management == 1) {
@@ -1024,8 +1050,12 @@ class HomeController extends Controller
         } else {
             $session_id = session()->getId();
         }
-        $cartitems = Cart::select('carts.id', 'carts.item_id', 'carts.item_name', 'carts.item_image', 'carts.item_price', 'carts.extras_name', 'carts.extras_price', 'carts.qty', 'carts.price', 'carts.tax', 'carts.variants_id', 'carts.variants_name', 'carts.variants_price', DB::raw("GROUP_CONCAT(tax.name) as name"))
-            ->leftjoin("tax", DB::raw("FIND_IN_SET(tax.id,carts.tax)"), ">", DB::raw("'0'"))
+        // Security fix: Use leftJoin with whereRaw in closure instead of DB::raw in join condition
+        $cartitems = Cart::select('carts.id', 'carts.item_id', 'carts.item_name', 'carts.item_image', 'carts.item_price', 'carts.extras_name', 'carts.extras_price', 'carts.qty', 'carts.price', 'carts.tax', 'carts.variants_id', 'carts.variants_name', 'carts.variants_price')
+            ->selectRaw('GROUP_CONCAT(tax.name) as name')
+            ->leftJoin('tax', function($join) {
+                $join->whereRaw('FIND_IN_SET(tax.id, carts.tax) > 0');
+            })
             ->where('carts.vendor_id', $vendor_id);
         if (Auth::user() && Auth::user()->type == 3) {
             $cartitems->where('carts.user_id', @$user_id);
@@ -1248,7 +1278,12 @@ class HomeController extends Controller
             $vdata = $storeinfo->vendor_id;
         }
 
-        $status = Order::select('order_number', DB::raw('DATE_FORMAT(created_at, "%d %M %Y") as date'), 'address', 'building', 'landmark', 'pincode', 'order_type', 'id', 'discount_amount', 'order_number', 'status','status_type','order_notes', 'tax', 'tax_name', 'delivery_charge', 'couponcode', 'offer_type', 'sub_total', 'grand_total', 'customer_name', 'customer_email', 'mobile')->where('order_number', $request->ordernumber)->where('vendor_id',$vdata)->first();
+        // Security fix: Use selectRaw instead of DB::raw for DATE_FORMAT
+        $status = Order::select('order_number', 'address', 'building', 'landmark', 'pincode', 'order_type', 'id', 'discount_amount', 'status','status_type','order_notes', 'tax', 'tax_name', 'delivery_charge', 'couponcode', 'offer_type', 'sub_total', 'grand_total', 'customer_name', 'customer_email', 'mobile')
+            ->selectRaw('DATE_FORMAT(created_at, "%d %M %Y") as date')
+            ->where('order_number', $request->ordernumber)
+            ->where('vendor_id',$vdata)
+            ->first();
         $orderdata = Order::with('tableqr')->where('order_number', $request->ordernumber)->where('vendor_id',$vdata)->first();
         $orderdetails = OrderDetails::where('order_details.order_id', $status->id)->get();
         $summery = array(
@@ -1421,11 +1456,16 @@ class HomeController extends Controller
         if ($user_id != null) {
 
             if ($request->has('search') && $request->search != "") {
-                $getsearchitems = Item::with(['variation', 'extras'])->select('items.*', DB::raw('(case when favorite.item_id is null then 0 else 1 end) as is_favorite'))
-                    ->leftJoin('favorite', function ($query) use ($user_id) {
-                        $query->on('favorite.item_id', '=', 'items.id')
-                            ->where('favorite.user_id', '=', $user_id);
-                    })->where('items.vendor_id', $vdata)->where('is_available', '1')->where('items.top_deals', '!=', 1)->where('items.item_name', 'LIKE', '%' . $request->search . '%')->orderBy('id', 'ASC')->get();
+                // Security fix: Use selectRaw with COALESCE and bound parameters
+                $getsearchitems = Item::with(['variation', 'extras'])
+                    ->select('items.*')
+                    ->selectRaw('COALESCE((SELECT 1 FROM favorite WHERE favorite.item_id = items.id AND favorite.user_id = ? LIMIT 1), 0) as is_favorite', [$user_id])
+                    ->where('items.vendor_id', $vdata)
+                    ->where('is_available', '1')
+                    ->where('items.top_deals', '!=', 1)
+                    ->where('items.item_name', 'LIKE', '%' . $request->search . '%')
+                    ->orderBy('id', 'ASC')
+                    ->get();
             }
         } else {
 
@@ -1446,10 +1486,10 @@ class HomeController extends Controller
                 $item = Item::where('id', $request->item_id)->where('vendor_id', $request->vendor_id)->first();
 
                 if (Auth::user() && Auth::user()->type == 3) {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $item->id)->where('user_id', Auth::user()->id)->where('buynow', 0)->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $item->id)->where('user_id', Auth::user()->id)->where('buynow', 0)->first();
                 } else {
 
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('item_id', $item->id)->where('session_id', Session::getId())->where('buynow', 0)->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('item_id', $item->id)->where('session_id', Session::getId())->where('buynow', 0)->first();
                 }
                 if ($cartqty->totalqty != null && $cartqty->totalqty != "") {
                     $qty = $cartqty->totalqty + $request->qty;
@@ -1483,10 +1523,10 @@ class HomeController extends Controller
                 $item = Variants::where('name', str_replace(',', '|', $variant_name))->where('item_id', $request->item_id)->first();
                 $item_name = Item::select('item_name')->where('id', $request->item_id)->first();
                 if (Auth::user() && Auth::user()->type == 3) {
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $item->id)->where('user_id', Auth::user()->id->where('buynow', 0))->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $item->id)->where('user_id', Auth::user()->id->where('buynow', 0))->first();
                 } else {
 
-                    $cartqty = Cart::select(DB::raw("SUM(qty) as totalqty"))->where('variants_id', $item->id)->where('session_id', Session::getId())->where('buynow', 0)->first();
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')->where('variants_id', $item->id)->where('session_id', Session::getId())->where('buynow', 0)->first();
                 }
 
                 if ($cartqty->totalqty != null && $cartqty->totalqty != "") {
@@ -1578,12 +1618,15 @@ class HomeController extends Controller
         if (Auth::user() && Auth::user()->type == 3) {
             $user_id = Auth::user()->id;
 
-
-            $topdealsproducts = Item::with(['variation', 'extras', 'item_image'])->select('items.*', DB::raw('(case when favorite.item_id is null then 0 else 1 end) as is_favorite'))
-                ->leftJoin('favorite', function ($query) use ($user_id) {
-                    $query->on('favorite.item_id', '=', 'items.id')
-                        ->where('favorite.user_id', '=', $user_id);
-                })->where('items.top_deals', '1')->where('items.vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id', 'ASC')->get();
+            // Security fix: Use selectRaw with COALESCE and bound parameters
+            $topdealsproducts = Item::with(['variation', 'extras', 'item_image'])
+                ->select('items.*')
+                ->selectRaw('COALESCE((SELECT 1 FROM favorite WHERE favorite.item_id = items.id AND favorite.user_id = ? LIMIT 1), 0) as is_favorite', [$user_id])
+                ->where('items.top_deals', '1')
+                ->where('items.vendor_id', $vdata)
+                ->where('is_available', '1')
+                ->orderBy('reorder_id', 'ASC')
+                ->get();
         } else {
 
             $topdealsproducts = Item::with(['variation', 'extras', 'item_image'])->where('items.top_deals', '1')->where('vendor_id', $vdata)->where('is_available', '1')->orderBy('reorder_id')->get();
