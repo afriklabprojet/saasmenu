@@ -486,7 +486,7 @@ class HomeController extends Controller
 
         // Security fix: Use selectRaw with bound parameters instead of DB::raw with concatenation
         $assetsUrl = url(config('app.assets_path_url', env('ASSETSPATHURL')) . 'item/');
-        
+
         $getitem = Item::with(['variation', 'extras','item_image'])->select(
             'id',
             'item_original_price',
@@ -509,7 +509,7 @@ class HomeController extends Controller
             'top_deals'
 
         )->where('id', $request->id)->where('vendor_id', $request->vendor_id)->first();
-        
+
         // Add image_url as attribute after query
         if ($getitem && $getitem->image) {
             $getitem->image_url = $assetsUrl . '/' . $getitem->image;
