@@ -188,98 +188,42 @@ class HomeController extends Controller
 
         return view('front.template-3.category', compact('getcategory', 'getitem', 'vdata', 'storeinfo', 'bannerimage', 'cartdata', 'blogs'));
     }
-    public function user_subscribe(Request $request)
-    {
-        try {
-            $host = $_SERVER['HTTP_HOST'];
-            if ($host  ==  env('WEBSITE_HOST')) {
-                $vdata = $request->id;
-            }
-            // if the current host doesn't contain the website domain (meaning, custom domain)
-            else {
-                $storeinfo = Settings::where('custom_domain', $host)->first();
-                $vdata = $storeinfo->vendor_id;
-            }
 
-            $subscribe = new Subscriber;
-            $subscribe->vendor_id = $vdata;
-            $subscribe->email = $request->email;
-            $subscribe->save();
-            return redirect()->back()->with('success', trans('messages.success'));
-        } catch (\Throwable $th) {
-            return redirect()->back()->with('error', trans('messages.wrong'));
-        }
-    }
-    public function contact(Request $request)
-    {
-        $vendorData = $this->getVendorData($request);
-        $storeinfo = $vendorData['storeinfo'];
-        $vdata = $vendorData['vendor_id'];
-
-        $timings = Timing::where('vendor_id', $vdata)->get();
-        return view('front.contactus', compact('vdata', 'storeinfo', 'timings', 'vdata'));
-    }
-    public function save_contact(Request $request)
-    {
-        if (
-            SystemAddons::where('unique_identifier', 'google_recaptcha')->first() != null &&
-            SystemAddons::where('unique_identifier', 'google_recaptcha')->first()->activated == 1
-        ) {
-            if (helper::appdata('')->recaptcha_version == 'v2') {
-                $request->validate([
-                    'g-recaptcha-response' => 'required'
-                ], [
-                    'g-recaptcha-response.required' => 'The g-recaptcha-response field is required.'
-                ]);
-            }
-            if (helper::appdata('')->recaptcha_version == 'v3') {
-                $score = RecaptchaV3::verify($request->get('g-recaptcha-response'), 'contact');
-                if ($score <= helper::appdata('')->score_threshold) {
-                    return redirect()->back()->with('error', 'You are most likely a bot');
-                }
-            }
-        }
-        $newinquiry = new Contact;
-        $newinquiry->vendor_id = $request->vendor_id;
-        $newinquiry->name = $request->first_name . " " . $request->last_name;
-        $newinquiry->email = $request->email;
-        $newinquiry->mobile = $request->mobile;
-        $newinquiry->message = $request->message;
-        $newinquiry->save();
-        $vendordata = User::where('id', $request->vendor_id)->first();
-        $emaildata = helper::emailconfigration($vendordata->id);
-        Config::set('mail', $emaildata);
-        helper::vendor_contact_data($vendordata->name, $vendordata->email, $request->name, $request->email, $request->mobile, $request->message);
-        return redirect()->back()->with('success', trans('messages.success'));
-    }
-
-
-    public function table_book(Request $request)
-    {
-        $vendorData = $this->getVendorData($request);
-        $storeinfo = $vendorData['storeinfo'];
-        $vdata = $vendorData['vendor_id'];
-
-        return view('front.tablebook', compact('vdata','storeinfo', 'vdata'));
-    }
-    public function save_booking(Request $request)
-    {
-        $vendorData = $this->getVendorData($request);
-        $vdata = $vendorData['vendor_id'];
-        $table = new TableBook;
-        $table->vendor_id = $vdata;
-        $table->event = $request->event;
-        $table->people = $request->people;
-        $table->event_date = $request->event_date;
-        $table->event_time = $request->event_time;
-        $table->name = $request->name;
-        $table->email = $request->email;
-        $table->mobile = $request->mobile;
-        $table->notes = $request->notes;
-        $table->save();
-        return redirect()->back()->with('success', trans('messages.success'));
-    }
-
+    /**
+     * ============================================================
+     * ❌ MÉTHODES DÉPRÉCIÉES - SUPPRIMÉES
+     * ============================================================
+     *
+     * Les méthodes suivantes ont été supprimées car remplacées par
+     * des contrôleurs refactorisés plus modernes et sécurisés :
+     *
+     * ❌ user_subscribe() → ContactController::subscribe()
+     *    - Raison : Pas de validation, pas de vérification duplicats,
+     *      pas d'audit logging. Remplacée par version complète avec
+     *      Validator, strip_tags, AuditService.
+     *
+     * ❌ contact() → ContactController::contact()
+     *    - Raison : Version simplifiée, remplacée par contrôleur dédié.
+     *
+     * ❌ save_contact() → ContactController::saveContact()
+     *    - Raison : reCAPTCHA v2/v3 complexe, pas de validation input,
+     *      pas d'audit logging. Remplacée par version moderne avec
+     *      Validator, strip_tags, reCAPTCHA v3 simplifié, AuditService.
+     *      NOTE: Email notification déjà présente dans nouveau contrôleur.
+     *
+     * ❌ table_book() → ContactController::tableBook()
+     *    - Raison : Version basique, remplacée par contrôleur dédié.
+     *
+     * ❌ save_booking() → ContactController::saveBooking()
+     *    - Raison : Pas de validation, pas de vérification disponibilité
+     *      créneaux, pas d'audit logging. Remplacée par version complète
+     *      avec Validator, isTimeSlotAvailable(), AuditService.
+     *
+     * Date suppression : 11 novembre 2025
+     * Migration vers : app/Http/Controllers/web/ContactController.php
+     * Documentation : PAGE_CONTACT_ANALYSIS.md, ROUTES_MIGRATION_STATUS.md
+     * ============================================================
+     */
 
     public function aboutus(Request $request)
     {

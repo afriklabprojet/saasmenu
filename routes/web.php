@@ -633,7 +633,7 @@ Route::post('/cart/deletecartitem', [CartController::class, 'removeItem'])->name
 Route::get('lang/change', [LangController::class, 'change'])->name('changeLang');
 
 // Routes panier supplémentaires
-Route::post('/changeqty', [CartController::class, 'updateQuantity']);
+// ❌ SUPPRIMÉ : Route::post('/changeqty', ...) - Doublon de /cart/qtyupdate (ligne 631)
 Route::get('get-products-variant-quantity', [WebProductController::class, 'getVariations']);
 
 Route::group(['prefix' => $prefix, 'middleware' => 'FrontMiddleware'], function () {
@@ -698,12 +698,17 @@ Route::group(['prefix' => $prefix, 'middleware' => 'FrontMiddleware'], function 
 
 
     //RÉSERVATIONS DE TABLES - REFACTORISÉ
-    Route::get('/tablebook', [WebContactController::class, 'tableBook']);
+    // ❌ SUPPRIMÉ : Route::get('/tablebook', ...) - Doublon de /book (ligne 670)
     Route::post('/book', [WebContactController::class, 'saveBooking']);
 
-    // PAGES REDONDANTES (déjà définies plus haut)
-    Route::get('/terms_condition', [PageController::class, 'termsConditions']);
-    Route::get('/privacypolicy', [PageController::class, 'privacyPolicy']);
+    // REDIRECTIONS SEO (pour anciennes URLs)
+    Route::get('/terms_condition', function () {
+        return redirect()->route('front.terms', ['vendor' => request()->route('vendor') ?? '']);
+    })->name('front.terms.legacy');
+    
+    Route::get('/privacypolicy', function () {
+        return redirect()->route('front.privacy', ['vendor' => request()->route('vendor') ?? '']);
+    })->name('front.privacy.legacy');
 
     // favorite
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('user-favouritelist');

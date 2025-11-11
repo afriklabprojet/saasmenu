@@ -23,6 +23,7 @@ use App\Http\Controllers\web\MenuController;
 use App\Http\Controllers\web\CartController;
 use App\Http\Controllers\web\OrderController as WebOrderController;
 use App\Http\Controllers\web\PageController;
+use App\Http\Controllers\web\ContactController as WebContactController;
 
 /**
  * ========================================
@@ -70,19 +71,22 @@ Route::group(['prefix' => 'v2', 'as' => 'v2.'], function () {
         Route::post('/cancel', [WebOrderController::class, 'cancel'])->name('cancel');
     });
 
-    // 📄 PAGES STATIQUES (PageController - à implémenter si nécessaire)
+    // 📄 PAGES STATIQUES & CONTACT
     Route::name('page.')->group(function () {
-        Route::get('/contact', [PageController::class, 'contact'])->name('contact');
-        Route::post('/contact/submit', [PageController::class, 'save_contact'])->name('contact.submit');
-        Route::get('/about', [PageController::class, 'aboutus'])->name('about');
-        Route::get('/terms', [PageController::class, 'terms_condition'])->name('terms');
-        Route::get('/privacy', [PageController::class, 'privacyshow'])->name('privacy');
-        Route::get('/refund-policy', [PageController::class, 'refundprivacypolicy'])->name('refund');
-        Route::post('/subscribe', [PageController::class, 'user_subscribe'])->name('subscribe');
+        // Pages statiques (PageController)
+        Route::get('/about', [PageController::class, 'aboutUs'])->name('about');
+        Route::get('/terms', [PageController::class, 'termsConditions'])->name('terms');
+        Route::get('/privacy', [PageController::class, 'privacyPolicy'])->name('privacy');
+        Route::get('/refund-policy', [PageController::class, 'refundPrivacyPolicy'])->name('refund');
+
+        // Contact & Réservations (ContactController)
+        Route::get('/contact', [WebContactController::class, 'contact'])->name('contact');
+        Route::post('/contact/submit', [WebContactController::class, 'saveContact'])->name('contact.submit');
+        Route::post('/subscribe', [WebContactController::class, 'subscribe'])->name('subscribe');
 
         // Table Booking
-        Route::get('/table-booking', [PageController::class, 'table_book'])->name('booking');
-        Route::post('/table-booking/submit', [PageController::class, 'save_booking'])->name('booking.submit');
+        Route::get('/table-booking', [WebContactController::class, 'tableBook'])->name('booking');
+        Route::post('/table-booking/submit', [WebContactController::class, 'saveBooking'])->name('booking.submit');
     });
 });
 
