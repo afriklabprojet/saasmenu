@@ -463,6 +463,346 @@ class OrderController extends Controller
     }
 
     /**
+     * Handle payment gateway callbacks and create order
+     * Called after payment gateway redirects back (PayTab, Mollie, Xendit, etc.)
+     */
+    public function ordercreate(Request $request)
+    {
+        $paymentid = "";
+        
+        // Extract payment ID from different gateway responses
+        if ($request->paymentId != "") {
+            $paymentid = $request->paymentId;
+        }
+        if ($request->payment_id != "") {
+            $paymentid = $request->payment_id;
+        }
+        if ($request->transaction_id != "") {
+            $paymentid = $request->transaction_id;
+        }
+
+        // PhonePe callback (payment_type 11)
+        if (Session::get('payment_type') == "11") {
+            if ($request->code == "PAYMENT_SUCCESS") {
+                $paymentid = $request->transactionId;
+            }
+        }
+
+        // PayTab callback (payment_type 12)
+        if (Session::get('payment_type') == "12") {
+            $checkstatus = app('App\Http\Controllers\addons\PayTabController')
+                            ->checkpaymentstatus(Session::get('tran_ref'), Session::get('vendor_id'));
+
+            if ($checkstatus == "A") {
+                $paymentid = Session::get('tran_ref');
+            } else {
+                return redirect(Session::get('failureurl'))
+                         ->with('error', Session::get('paytab_response'));
+            }
+        }
+
+        // Mollie callback (payment_type 13)
+        if (Session::get('payment_type') == "13") {
+            $checkstatus = app('App\Http\Controllers\addons\MollieController')
+                            ->checkpaymentstatus(Session::get('tran_ref'), Session::get('vendor_id'));
+
+            if ($checkstatus == "A") {
+                $paymentid = Session::get('tran_ref');
+            } else {
+                return redirect(Session::get('failureurl'))
+                         ->with('error', Session::get('mollie_response'));
+            }
+        }
+
+        // Khalti callback (payment_type 14)
+        if (Session::get('payment_type') == "14") {
+            if ($request->status == "Completed") {
+                $paymentid = $request->transaction_id;
+            } else {
+                return redirect(Session::get('failureurl'))
+                         ->with('error', 'Payment failed');
+            }
+        }
+
+        // Xendit callback (payment_type 15)
+        if (Session::get('payment_type') == "15") {
+            $checkstatus = app('App\Http\Controllers\addons\XenditController')
+                            ->checkpaymentstatus(Session::get('tran_ref'), Session::get('vendor_id'));
+
+            if ($checkstatus == "PAID") {
+                $paymentid = Session::get('payment_id');
+            } else {
+                return redirect(Session::get('failureurl'))
+                         ->with('error', 'Payment not completed');
+            }
+        }
+
+        // Get user/session
+        $user_id = Auth::check() && Auth::user()->type == 3 ? Auth::user()->id : null;
+        $session_id = $user_id ? null : Session::getId();
+        
+        // Create order using helper
+        $orderresponse = helper::createorder(
+            Session::get('vendor_id'),
+            $user_id,
+            $session_id,
+            Session::get('payment_type'),
+            $paymentid,
+            Session::get('customer_email'),
+            Session::get('customer_name'),
+            Session::get('customer_mobile'),
+            Session::get('stripeToken'),
+            Session::get('grand_total'),
+            Session::get('delivery_charge'),
+            Session::get('address'),
+            Session::get('building'),
+            Session::get('landmark'),
+            Session::get('postal_code'),
+            Session::get('discount_amount'),
+            Session::get('offer_type'),
+            Session::get('sub_total'),
+            Session::get('tax'),
+            Session::get('tax_name'),
+            Session::get('delivery_time'),
+            Session::get('delivery_date'),
+            Session::get('delivery_area'),
+            Session::get('couponcode'),
+            Session::get('order_type'),
+            Session::get('notes'),
+            Session::get('table'),
+            '',
+            Session::get('buynow')
+        );
+
+        $slug = Session::get('slug');
+        $order_number = $orderresponse;
+
+        // Audit log
+        AuditService::logAdminAction(
+            'ORDER_CREATED_VIA_GATEWAY',
+            'Order',
+            [
+                'order_number' => $order_number,
+                'payment_type' => Session::get('payment_type'),
+                'payment_id' => $paymentid
+            ]
+        );
+
+        return view('front.mercadoorder', compact('slug', 'order_number'));
+    }
+
+    /**
+     * Process payment method selection and order creation
+     * Simplified version - supports COD and delegates to helper::createorder
+     */
+    public function paymentmethod(Request $request)
+    {
+        $request->validate([
+            'vendor_id' => 'required|integer',
+            'payment_type' => 'required|integer',
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email|max:255',
+            'mobile' => 'required|string|max:20',
+            'order_type' => 'required|in:1,2',
+            'grand_total' => 'required|numeric|min:0',
+        ]);
+
+        // Determine vendor_id and buynow flag
+        $vendor_id = $request->payment_type == 6 ? $request->modal_vendor_id : $request->vendor_id;
+        $buynow = $request->payment_type == 6 ? $request->modal_buynow : ($request->buynow ?? 0);
+        
+        // Get user or session
+        $user_id = Auth::check() && Auth::user()->type == 3 ? Auth::user()->id : null;
+        $session_id = Auth::check() ? null : Session::getId();
+        
+        $storeinfo = helper::storeinfo($request->vendor);
+        
+        // Get and validate cart
+        $cartitems = Cart::select('carts.id', 'carts.item_id', 'carts.item_name', 'carts.item_price', 'carts.qty', 'carts.price', 'carts.tax', 'carts.variants_id')
+            ->where('carts.vendor_id', $vendor_id);
+        
+        if ($user_id) {
+            $cartitems->where('carts.user_id', $user_id);
+        } else {
+            $cartitems->where('carts.session_id', $session_id);
+        }
+        
+        $cartitems->where('carts.buynow', $buynow);
+        $cartdata = $cartitems->get();
+
+        if ($cartdata->count() == 0) {
+            return response()->json(['status' => 0, 'message' => trans('messages.cart_empty')], 200);
+        }
+
+        // Validate stock and min/max order (same as checkout validation)
+        try {
+            $this->validateCartStock($cartdata, $vendor_id);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 0, 'message' => $e->getMessage()], 200);
+        }
+
+        // Calculate taxes
+        $tax_total = 0;
+        $tax_name = [];
+        $tax_price = [];
+        
+        foreach ($cartdata as $cart) {
+            $taxlist = helper::gettax($cart->tax);
+            if (!empty($taxlist)) {
+                foreach ($taxlist as $tax) {
+                    if (!empty($tax)) {
+                        if (!in_array($tax->name, $tax_name)) {
+                            $tax_name[] = $tax->name;
+                            if ($tax->type == 1) {
+                                $price = $tax->tax * $cart->qty;
+                            } else if ($tax->type == 2) {
+                                $price = ($tax->tax / 100) * ($cart->price * $cart->qty);
+                            } else {
+                                $price = 0;
+                            }
+                            $tax_price[] = $price;
+                        } else {
+                            $index = array_search($tax->name, $tax_name);
+                            if ($tax->type == 1) {
+                                $price = $tax->tax * $cart->qty;
+                            } else if ($tax->type == 2) {
+                                $price = ($tax->tax / 100) * ($cart->price * $cart->qty);
+                            } else {
+                                $price = 0;
+                            }
+                            $tax_price[$index] += $price;
+                        }
+                    }
+                }
+            }
+        }
+        
+        $tax_total = array_sum($tax_price);
+        
+        // Prepare order data
+        $payment_id = $request->payment_id ?? "";
+        $filename = "";
+        
+        // Handle payment type 6 (Bank transfer with screenshot)
+        if ($request->payment_type == '6') {
+            if ($request->hasFile('screenshot')) {
+                $filename = 'screenshot-' . uniqid() . "." . $request->file('screenshot')->getClientOriginalExtension();
+                $request->file('screenshot')->move(env('ASSETPATHURL') . 'admin-assets/images/screenshot/', $filename);
+            }
+            
+            // Use modal_ prefixed fields for payment type 6
+            $orderresponse = helper::createorder(
+                $request->modal_vendor_id,
+                $user_id,
+                $session_id,
+                $request->payment_type,
+                $payment_id,
+                $request->modal_customer_email,
+                $request->modal_customer_name,
+                $request->modal_customer_mobile,
+                $request->stripeToken ?? '',
+                $request->modal_grand_total,
+                $request->modal_delivery_charge ?? 0,
+                $request->modal_address ?? '',
+                $request->modal_building ?? '',
+                $request->modal_landmark ?? '',
+                $request->modal_postal_code ?? '',
+                $request->modal_discount_amount ?? 0,
+                $request->modal_offer_type ?? '',
+                $request->modal_subtotal,
+                $tax_total,
+                implode("|", $tax_name),
+                $request->modal_delivery_time ?? '',
+                $request->modal_delivery_date ?? '',
+                $request->modal_delivery_area ?? '',
+                $request->modal_couponcode ?? '',
+                $request->modal_order_type,
+                $request->modal_notes ?? '',
+                $request->modal_table ?? '',
+                $filename,
+                $buynow
+            );
+        } else {
+            // Standard order creation
+            $orderresponse = helper::createorder(
+                $request->vendor_id,
+                $user_id,
+                $session_id,
+                $request->payment_type,
+                $payment_id,
+                $request->customer_email,
+                $request->customer_name,
+                $request->mobile,
+                $request->stripeToken ?? '',
+                $request->grand_total,
+                $request->delivery_charge ?? 0,
+                $request->address ?? '',
+                $request->building ?? '',
+                $request->landmark ?? '',
+                $request->postal_code ?? '',
+                $request->discount_amount ?? 0,
+                $request->offer_type ?? '',
+                $request->sub_total,
+                $tax_total,
+                implode("|", $tax_name),
+                $request->delivery_time ?? '',
+                $request->delivery_date ?? '',
+                $request->delivery_area ?? '',
+                $request->couponcode ?? '',
+                $request->order_type,
+                $request->notes ?? '',
+                $request->table ?? '',
+                $filename,
+                $buynow
+            );
+        }
+        
+        // Handle response
+        if ($orderresponse == -1) {
+            return response()->json(['status' => 0, 'message' => trans('messages.cart_empty')], 200);
+        }
+        
+        if ($orderresponse == "false") {
+            return response()->json(['status' => 0, 'message' => trans('messages.order_not_placed')], 200);
+        }
+        
+        // Decrement coupon limit if used
+        if ($request->offer_type == "promocode" && $request->couponcode != null) {
+            $promocode = Coupons::where('code', $request->couponcode)
+                                ->where('vendor_id', $vendor_id)
+                                ->first();
+            if ($promocode) {
+                $promocode->decrement('limit', 1);
+            }
+        }
+        
+        // Audit log
+        AuditService::logAdminAction(
+            'CREATE_ORDER_VIA_PAYMENT',
+            'Order',
+            [
+                'order_number' => $orderresponse,
+                'payment_type' => $request->payment_type,
+                'grand_total' => $request->grand_total ?? $request->modal_grand_total
+            ]
+        );
+        
+        // Return success response
+        if ($request->payment_type == '6') {
+            return redirect($request->slug . '/success/' . $orderresponse)
+                         ->with('success', trans('messages.order_placed'));
+        } else {
+            $url = url($request->slug . "/success/" . $orderresponse);
+            return response()->json([
+                'status' => 1,
+                'message' => trans('messages.order_placed'),
+                'order_number' => $orderresponse,
+                'url' => $url
+            ], 200);
+        }
+    }
+
+    /**
      * Cancel order
      */
     public function cancel(Request $request, $orderNumber)
