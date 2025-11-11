@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Cache;
 use App\Models\About;
@@ -15,7 +15,7 @@ use App\Models\User;
 
 class PageFlowTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected $vendor;
     protected $settings;

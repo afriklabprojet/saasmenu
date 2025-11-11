@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Http;
@@ -17,7 +17,7 @@ use App\Models\Timing;
 
 class ContactFlowTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected $vendor;
     protected $settings;
