@@ -11,26 +11,46 @@ class Item extends Model
     use HasFactory;
     protected $table = 'items';
 
+    /**
+     * The attributes that are mass assignable.
+     * 
+     * Security: Reduced from 19 to 14 fields
+     * Price and availability fields moved to $guarded
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'name',
-        'category_id',
-        'cat_id',
-        'vendor_id',
-        'price',
-        'original_price',
-        'description',
-        'image',
-        'is_available',
-        'is_featured',
-        'qty',
-        'min_order',
-        'max_order',
-        'tax',
-        'reorder_id',
-        'slug',
-        'sku',
-        'stock_management',
-        'low_qty'
+        'name',              // Item name
+        'category_id',       // Category assignment
+        'cat_id',            // Category ID (legacy)
+        'vendor_id',         // Which restaurant owns this
+        'description',       // Item description
+        'image',             // Item image
+        'min_order',         // Minimum order quantity
+        'max_order',         // Maximum order quantity
+        'reorder_id',        // Display order
+        'slug',              // SEO slug
+        'sku',               // Stock keeping unit
+        'stock_management',  // Enable/disable stock tracking
+        'low_qty',           // Low stock alert threshold
+        'tax',               // Tax ID/rate reference
+    ];
+
+    /**
+     * The attributes that are NOT mass assignable.
+     * These fields should only be modified through specific business logic.
+     *
+     * @var array<int, string>
+     */
+    protected $guarded = [
+        'id',
+        'price',             // Security: Price should be validated and controlled
+        'original_price',    // Security: Original price for discount calculation
+        'is_available',      // Business logic: Availability should be controlled
+        'is_featured',       // Business logic: Featured status (admin control)
+        'qty',               // Business logic: Stock quantity should be updated via inventory management
+        'created_at',
+        'updated_at',
     ];
 
     public function extras()

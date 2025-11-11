@@ -57,23 +57,26 @@ class OrderController extends Controller
             $total += $deliveryFee;
         }
 
-        // Create order
+        // Create order (security fix: protected fields set separately)
         $order = Order::create([
             'user_id' => $restaurant->user_id,
             'customer_id' => $customer->id,
-            'restaurant_id' => $request->restaurant_id,
-            'order_number' => 'ORD' . time(),
-            'status' => 'pending',
-            'subtotal' => $total - $deliveryFee,
-            'delivery_fee' => $deliveryFee,
-            'total' => $total,
             'delivery_type' => $request->delivery_type,
             'delivery_address' => $request->delivery_address,
-            'payment_method' => $request->payment_method,
-            'payment_status' => 'pending',
             'special_instructions' => $request->special_instructions,
-            'estimated_delivery_time' => now()->addMinutes(30),
         ]);
+        
+        // Set protected fields through direct assignment
+        $order->restaurant_id = $request->restaurant_id;
+        $order->order_number = 'ORD' . time();
+        $order->status = 'pending';
+        $order->subtotal = $total - $deliveryFee;
+        $order->delivery_fee = $deliveryFee;
+        $order->total = $total;
+        $order->payment_method = $request->payment_method;
+        $order->payment_status = 'pending';
+        $order->estimated_delivery_time = now()->addMinutes(30);
+        $order->save();
 
         // Create order items
         foreach ($orderItems as $itemData) {

@@ -154,19 +154,22 @@ class TableQRController extends Controller
                 ];
             }
 
-            // Créer la commande
+            // Créer la commande (security fix: protected fields set separately)
             $order = Order::create([
-                'restaurant_id' => $restaurant->id,
                 'table_id' => $table->id,
-                'order_number' => 'TBL-' . strtoupper(Str::random(8)),
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'total_amount' => $totalAmount,
-                'status' => 'pending',
-                'order_type' => 'table_qr',
                 'special_instructions' => $request->special_instructions,
-                'ordered_at' => now(),
             ]);
+            
+            // Set protected fields through direct assignment
+            $order->restaurant_id = $restaurant->id;
+            $order->order_number = 'TBL-' . strtoupper(Str::random(8));
+            $order->customer_name = $request->customer_name;
+            $order->customer_phone = $request->customer_phone;
+            $order->total_amount = $totalAmount;
+            $order->status = 'pending';
+            $order->order_type = 'table_qr';
+            $order->ordered_at = now();
+            $order->save();
 
             // Ajouter les items de la commande
             foreach ($orderItems as $orderItem) {

@@ -26,14 +26,16 @@ class OptimizedOrderController extends Controller
     {
         $startTime = microtime(true);
 
-        // 1. TRAITEMENT CRITIQUE IMMÉDIAT
+        // 1. TRAITEMENT CRITIQUE IMMÉDIAT (security fix: protected fields set separately)
         $order = Order::create([
             'vendor_id' => $request->vendor_id,
             'customer_id' => $request->customer_id,
-            'total' => $request->total,
-            'status' => 'pending',
-            'created_at' => now()
         ]);
+        
+        // Set protected fields
+        $order->total = $request->total;
+        $order->status = 'pending';
+        $order->save();
 
         // 2. RÉPONSE IMMÉDIATE À L'UTILISATEUR (comme Laravel 12 deferred)
         $responseTime = round((microtime(true) - $startTime) * 1000, 2);

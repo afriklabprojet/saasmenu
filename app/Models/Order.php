@@ -11,29 +11,49 @@ class Order extends Model
 
     protected $table = 'orders';
 
+    /**
+     * The attributes that are mass assignable.
+     * 
+     * Security: Reduced from 22 to 10 fields
+     * Sensitive financial and status fields moved to $guarded
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'user_id',
-        'customer_id',
-        'restaurant_id',
-        'vendor_id',
-        'table_id',
-        'order_number',
-        'status',
-        'subtotal',
-        'delivery_fee',
-        'tax',
-        'total',
-        'delivery_type',
-        'delivery_address',
-        'payment_method',
-        'payment_status',
-        'special_instructions',
-        'estimated_delivery_time',
-        'rating',
-        'review',
-        'rated_at',
-        'cancelled_at',
-        'cancellation_reason',
+        'user_id',           // Who placed the order
+        'customer_id',       // Customer reference
+        'vendor_id',         // Which restaurant
+        'table_id',          // For QR table orders
+        'delivery_type',     // delivery/pickup
+        'delivery_address',  // Customer provided
+        'special_instructions', // Customer notes
+        'rating',            // Customer can rate
+        'review',            // Customer can review
+        'cancellation_reason', // Why order was cancelled
+    ];
+
+    /**
+     * The attributes that are NOT mass assignable.
+     * These fields should only be modified through specific business logic.
+     *
+     * @var array<int, string>
+     */
+    protected $guarded = [
+        'id',
+        'restaurant_id',     // Business logic: Set from vendor relationship
+        'order_number',      // Security: Auto-generated, should be unique
+        'status',            // Business logic: Status transitions should be controlled
+        'subtotal',          // Security: Calculated from cart, not user input
+        'delivery_fee',      // Security: Calculated from zone, not user input
+        'tax',               // Security: Calculated from items, not user input
+        'total',             // Security: Calculated sum, not user input
+        'payment_method',    // Security: Validated gateway only
+        'payment_status',    // Security: Updated by payment gateway callback
+        'estimated_delivery_time', // Business logic: Calculated
+        'rated_at',          // System timestamp
+        'cancelled_at',      // System timestamp
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [

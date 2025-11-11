@@ -89,16 +89,21 @@ class SocialLoginController extends Controller
         }
 
         // Créer un nouvel utilisateur
-        return User::create([
+        $user = User::create([
             'name' => $socialUser->getName(),
             'email' => $socialUser->getEmail(),
             'password' => Hash::make(Str::random(24)), // Mot de passe aléatoire
             $columnName => $socialUser->getId(),
             'login_type' => $provider,
             'image' => $socialUser->getAvatar(),
-            'type' => 3, // Client par défaut
-            'is_verified' => 1, // Email déjà vérifié par le provider
         ]);
+        
+        // Security fix: Set protected fields separately
+        $user->type = 3; // Client par défaut
+        $user->is_verified = 1; // Email déjà vérifié par le provider
+        $user->save();
+        
+        return $user;
     }
 
     /**
