@@ -13,35 +13,78 @@ use App\Models\Cart;
 use App\Models\Item;
 use App\Models\Payment;
 use App\Models\CustomStatus;
+use App\Models\Coupons;
+use App\Models\DeliveryArea;
+use App\Models\TableQR;
+use App\Models\User;
+use App\Models\Settings;
+use App\Models\Variants;
 use App\Helpers\helper;
 use App\Services\AuditService;
+use Illuminate\Support\Facades\Config;
 use Carbon\Carbon;
+use App\Http\Controllers\web\Traits\VendorDataTrait;
 
 class OrderController extends Controller
 {
+    use VendorDataTrait;
     /**
      * Display checkout page
      */
     public function checkout(Request $request)
     {
-        $vdata = Session::get('restaurant_id');
+        // Resolve vendor from host or session
+    $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
 
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');
         }
 
         $settingdata = helper::appdata($vdata);
+
+        // cart items for this vendor
         $cartdata = $this->getCartItems($vdata);
 
         if ($cartdata->isEmpty()) {
             return redirect('/cart')->with('error', 'Votre panier est vide');
         }
 
+        // Validate stock and min/max order before checkout
+        try {
+            $this->validateCartStock($cartdata, $vdata);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+
+        // Payment methods, coupons, delivery areas, and table QR
         $paymentmethods = Payment::where('vendor_id', $vdata)
                                 ->where('is_available', 1)
                                 ->get();
 
-        return view('front.checkout', compact('settingdata', 'cartdata', 'vdata', 'paymentmethods'));
+        $coupons = Coupons::where('vendor_id', $vdata)
+                          ->where('is_available', 1)
+                          ->get();
+
+        $deliveryAreas = DeliveryArea::where('vendor_id', $vdata)
+                                     ->where('is_available', 1)
+                                     ->get();
+
+        $tableQrs = TableQR::where('vendor_id', $vdata)
+                           ->where('is_available', 1)
+                           ->get();
+
+        // Prepare tax aggregation per item (if needed by view)
+        $taxArr = [];
+        foreach ($cartdata as $c) {
+            // Use existing helper to fetch tax definition when available
+            if (isset($c->tax)) {
+                $taxArr[$c->item_id] = helper::gettax($c->tax);
+            } else {
+                $taxArr[$c->item_id] = [];
+            }
+        }
+
+        return view('front.checkout', compact('settingdata', 'cartdata', 'vdata', 'paymentmethods', 'coupons', 'deliveryAreas', 'tableQrs', 'taxArr'));
     }
 
     /**
@@ -116,7 +159,8 @@ class OrderController extends Controller
     public function success(Request $request)
     {
         $orderNumber = $request->route('order_number');
-        $vdata = Session::get('restaurant_id');
+        // Resolve vendor and load order
+    $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
 
         $order = Order::where('order_number', $orderNumber)
                      ->where('vendor_id', $vdata)
@@ -141,16 +185,9 @@ class OrderController extends Controller
             'order_number' => 'required|string|max:50',
         ]);
 
-        $vdata = Session::get('restaurant_id');
+    $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
 
-        $order = Order::select([
-                'order_number',
-                DB::raw('DATE_FORMAT(created_at, "%d %M %Y") as date'),
-                'address', 'building', 'landmark', 'pincode', 'order_type',
-                'id', 'discount_amount', 'status', 'status_type', 'order_notes',
-                'tax', 'tax_name', 'delivery_charge', 'couponcode', 'offer_type',
-                'sub_total', 'grand_total', 'customer_name', 'customer_email', 'mobile'
-            ])
+        $order = Order::selectRaw('order_number, DATE_FORMAT(created_at, "%d %M %Y") as date, address, building, landmark, pincode, order_type, id, discount_amount, status, status_type, order_notes, tax, tax_name, delivery_charge, couponcode, offer_type, sub_total, grand_total, customer_name, customer_email, mobile')
             ->where('order_number', $request->order_number)
             ->where('vendor_id', $vdata)
             ->first();
@@ -175,6 +212,81 @@ class OrderController extends Controller
             'order_details' => $orderDetails,
             'custom_status' => $customStatus
         ]);
+    }
+
+    /**
+     * Apply promo code
+     */
+    public function applyPromocode(Request $request)
+    {
+        if ($request->promocode == "") {
+            return response()->json(["status" => 0, "message" => trans('messages.enter_promocode')], 200);
+        }
+        
+        $promocode = Coupons::where('code', $request->promocode)
+                            ->where('vendor_id', $request->vendor_id)
+                            ->first();
+        
+        if (!$promocode) {
+            return response()->json(['status' => 0, 'message' => trans('messages.wrong_promocode')], 200);
+        }
+        
+        // Set timezone if defined
+        if (@helper::appdata($request->vendor_id)->timezone != "") {
+            date_default_timezone_set(helper::appdata($request->vendor_id)->timezone);
+        }
+        
+        $current_date = date('Y-m-d');
+        $start_date = date('Y-m-d', strtotime($promocode->active_from));
+        $end_date = date('Y-m-d', strtotime($promocode->active_to));
+        
+        if ($start_date <= $current_date && $current_date <= $end_date) {
+            if ($promocode->limit > 0) {
+                if ($request->sub_total < @$promocode->price) {
+                    return response()->json(["status" => 0, "message" => trans('messages.not_eligible')], 200);
+                }
+                session([
+                    'offer_amount' => @$promocode->price,
+                    'offer_code' => @$promocode->code,
+                    'offer_type' => 'promocode',
+                ]);
+                
+                // Audit log
+                AuditService::logAdminAction(
+                    'APPLY_PROMOCODE',
+                    'Coupons',
+                    [
+                        'code' => $promocode->code,
+                        'amount' => $promocode->price,
+                        'vendor_id' => $request->vendor_id
+                    ],
+                    $promocode->id
+                );
+                
+                return response()->json(['status' => 1, 'message' => trans('messages.promocode_applied'), 'data' => $promocode], 200);
+            } else {
+                return response()->json(['status' => 0, 'message' => trans('messages.limit_over')], 200);
+            }
+        } else {
+            return response()->json(['status' => 0, 'message' => trans('messages.promocode_expired')], 200);
+        }
+    }
+
+    /**
+     * Remove promo code
+     */
+    public function removePromocode(Request $request)
+    {
+        session()->forget(['offer_amount', 'offer_code', 'offer_type']);
+        
+        // Audit log
+        AuditService::logAdminAction(
+            'REMOVE_PROMOCODE',
+            'Coupons',
+            ['vendor_id' => $request->vendor_id ?? Session::get('restaurant_id')]
+        );
+        
+        return response()->json(['status' => 1, 'message' => trans('messages.promocode_removed')], 200);
     }
 
     /**
@@ -375,6 +487,88 @@ class OrderController extends Controller
                   ->decrement('stock', $cart->qty);
             } else {
                 $item->decrement('qty', $cart->qty);
+            }
+        }
+    }
+
+    /**
+     * Validate cart stock and min/max order constraints
+     *
+     * @throws \Exception if validation fails
+     */
+    private function validateCartStock($cartdata, $vdata)
+    {
+        foreach ($cartdata as $cart) {
+            if ($cart->variants_id != "" && $cart->variants_id != null) {
+                // Aggregate cart qty for this variant
+                if (Auth::check()) {
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')
+                                ->where('variants_id', $cart->variants_id)
+                                ->where('user_id', Auth::id())
+                                ->first();
+                } else {
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')
+                                ->where('variants_id', $cart->variants_id)
+                                ->where('session_id', Session::getId())
+                                ->first();
+                }
+                
+                $variant = Variants::where('id', $cart->variants_id)->first();
+                $item_name = Item::select('item_name')->where('id', $cart->item_id)->first();
+                
+                if ($variant && $variant->stock_management == 1) {
+                    // Min order validation
+                    if ($variant->min_order != null && $variant->min_order != "" && $variant->min_order != 0) {
+                        if ($cartqty->totalqty < $variant->min_order) {
+                            throw new \Exception(trans('messages.min_qty_message') . $variant->min_order . " " . ($item_name->item_name));
+                        }
+                    }
+                    
+                    // Max order validation
+                    if ($variant->max_order != null && $variant->max_order != "" && $variant->max_order != 0) {
+                        if ($variant->max_order < $cartqty->totalqty) {
+                            throw new \Exception(trans('messages.max_qty_message') . $variant->max_order . ' ' . ($item_name->item_name));
+                        }
+                    }
+                    
+                    // Stock validation
+                    if ($cart->qty > $variant->qty) {
+                        throw new \Exception(trans('messages.cart_qty_msg') . ' ' . trans('labels.out_of_stock_msg') . ' ' . $item_name->item_name . '(' . $variant->name . ')');
+                    }
+                }
+            } else {
+                // Items without variants
+                $item = Item::where('id', $cart->item_id)->first();
+                
+                if (Auth::check()) {
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')
+                                ->where('item_id', $cart->item_id)
+                                ->where('user_id', Auth::id())
+                                ->first();
+                } else {
+                    $cartqty = Cart::selectRaw('SUM(qty) as totalqty')
+                                ->where('item_id', $cart->item_id)
+                                ->where('session_id', Session::getId())
+                                ->first();
+                }
+                
+                if ($item && $item->stock_management == 1) {
+                    if ($item->min_order != null && $item->min_order != "" && $item->min_order != 0) {
+                        if ($cartqty->totalqty < $item->min_order) {
+                            throw new \Exception(trans('messages.min_qty_message') . $item->min_order . ' ' . ($item->item_name));
+                        }
+                    }
+                    
+                    if ($item->max_order != null && $item->max_order != "" && $item->max_order != 0) {
+                        if ($item->max_order < $cartqty->totalqty) {
+                            throw new \Exception(trans('messages.max_qty_message') . $item->max_order . ' ' . ($item->item_name));
+                        }
+                    }
+                    
+                    if ($cart->qty > $item->qty) {
+                        throw new \Exception(trans('messages.cart_qty_msg') . ' ' . trans('labels.out_of_stock_msg') . ' ' . $item->item_name);
+                    }
+                }
             }
         }
     }

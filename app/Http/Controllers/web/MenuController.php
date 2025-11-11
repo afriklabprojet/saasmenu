@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\App;
 
 /**
  * MenuController
- * 
+ *
  * Gère l'affichage du catalogue produits et menu :
  * - Page d'accueil avec catégories et produits
  * - Liste des catégories
@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\App;
  * - Recherche de produits
  * - Top deals
  * - Quantités disponibles des variantes
- * 
+ *
  * Refactorisé depuis HomeController pour améliorer la maintenabilité
  */
 class MenuController extends Controller
@@ -59,7 +59,7 @@ class MenuController extends Controller
 
     /**
      * Page d'accueil avec catégories et produits
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\View\View
      */
@@ -129,7 +129,7 @@ class MenuController extends Controller
 
     /**
      * Affiche les produits d'une catégorie spécifique
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -165,7 +165,7 @@ class MenuController extends Controller
 
     /**
      * Affiche les détails d'un produit
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -216,13 +216,13 @@ class MenuController extends Controller
 
         $topdeals = TopDeals::where('vendor_id', $request->vendor_id)->first();
         $html = view('front.product.productdetail', compact('getitem', 'itemimages', 'vdata', 'topdeals'))->render();
-        
+
         return response()->json(['status' => 1, 'output' => $html], 200);
     }
 
     /**
      * Recherche de produits
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -258,7 +258,7 @@ class MenuController extends Controller
 
     /**
      * Affiche tous les top deals
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -294,7 +294,7 @@ class MenuController extends Controller
 
     /**
      * Récupère les quantités disponibles pour les variantes d'un produit
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */

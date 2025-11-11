@@ -19,11 +19,11 @@ use App\Http\Controllers\web\Traits\VendorDataTrait;
 
 /**
  * CartController
- * 
+ *
  * Gère toutes les opérations du panier d'achat
  * Version consolidée combinant l'architecture moderne (validation, audit)
  * avec la logique métier complète du HomeController
- * 
+ *
  * Refactorisé le: 10 novembre 2025
  */
 class CartController extends Controller
@@ -53,7 +53,7 @@ class CartController extends Controller
             // Récupérer item et variation
             $variant_name = str_replace('_', ' ', $request->variants_name ?? '');
             $variation = null;
-            
+
             if ($request->variants_name != null && $request->variants_name != "") {
                 $variation = Variants::where('name', str_replace(',', '|', $variant_name))
                     ->where('item_id', $request->item_id)
@@ -179,7 +179,7 @@ class CartController extends Controller
 
             // Créer l'item dans le panier
             $cart = new Cart;
-            
+
             if (Auth::user() && Auth::user()->type == 3) {
                 $cart->user_id = Auth::user()->id;
             } else {
@@ -197,12 +197,12 @@ class CartController extends Controller
             $cart->extras_id = $request->extras_id;
             $cart->qty = $request->qty;
             $cart->price = (float)$cartprice * (float)$request->qty;
-            
+
             if (!empty($variation)) {
                 $cart->variants_id = $variation->id;
                 $cart->variants_name = str_replace(',', '|', $variant_name);
             }
-            
+
             $cart->variants_price = $itemprice;
             $cart->buynow = $request->buynow ?? 0;
             $cart->save();
@@ -225,7 +225,7 @@ class CartController extends Controller
             session()->put('cart', $count);
             session()->put('vendor_id', $request->vendor_id);
             session()->put('old_session_id', Session::getId());
-            
+
             $checkouturl = URL::to($storeinfo->slug . '/checkout?buy_now=' . ($request->buynow ?? 0));
 
             // Log cart activity
@@ -342,7 +342,7 @@ class CartController extends Controller
         }
 
         $cartdata = Cart::where('id', $request->cart_id)->first();
-        
+
         if (!$cartdata) {
             return response()->json(['status' => 0, 'message' => trans('messages.cart_not_found')], 404);
         }
