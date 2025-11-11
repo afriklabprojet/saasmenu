@@ -161,9 +161,11 @@ class OrderController extends Controller
      */
     public function success(Request $request)
     {
-        $orderNumber = $request->route('order_number');
-        // Resolve vendor and load order
-    $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
+        $orderNumber = $request->route('order_number') ?: $request->order_number;
+        
+        // Resolve vendor and load store info
+        $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
+        $storeinfo = $this->getStoreInfo($request);
 
         $order = Order::where('order_number', $orderNumber)
                      ->where('vendor_id', $vdata)
@@ -174,9 +176,20 @@ class OrderController extends Controller
             return redirect('/')->with('error', 'Commande introuvable');
         }
 
+        // Generate WhatsApp message
+        $whmessage = helper::whatsappmessage($orderNumber, $vdata, $storeinfo);
+        
         $settingdata = helper::appdata($vdata);
 
-        return view('front.order-success', compact('order', 'settingdata', 'vdata'));
+        // Audit log
+        AuditService::logAdminAction(
+            'VIEW_ORDER_SUCCESS',
+            'Order',
+            ['order_number' => $orderNumber],
+            $order->id
+        );
+
+        return view('front.ordersuccess', compact('order', 'settingdata', 'vdata', 'storeinfo', 'orderNumber', 'whmessage'));
     }
 
     /**
@@ -188,33 +201,64 @@ class OrderController extends Controller
             'order_number' => 'required|string|max:50',
         ]);
 
-    $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
+        $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
+        $storeinfo = $this->getStoreInfo($request);
 
-        $order = Order::selectRaw('order_number, DATE_FORMAT(created_at, "%d %M %Y") as date, address, building, landmark, pincode, order_type, id, discount_amount, status, status_type, order_notes, tax, tax_name, delivery_charge, couponcode, offer_type, sub_total, grand_total, customer_name, customer_email, mobile')
-            ->where('order_number', $request->order_number)
+        $status = Order::selectRaw('order_number, DATE_FORMAT(created_at, "%d %M %Y") as date, address, building, landmark, pincode, order_type, id, discount_amount, status, status_type, order_notes, tax, tax_name, delivery_charge, couponcode, offer_type, sub_total, grand_total, customer_name, customer_email, mobile')
+            ->where('order_number', $request->order_number ?: $request->ordernumber)
             ->where('vendor_id', $vdata)
             ->first();
 
-        if (!$order) {
+        if (!$status) {
             return response()->json(['status' => 0, 'message' => 'Commande introuvable'], 404);
         }
 
-        $orderDetails = OrderDetails::with('item')
-                                  ->where('order_id', $order->id)
-                                  ->get();
+        // Load order with tableqr relation
+        $orderdata = Order::with('tableqr')
+                          ->where('order_number', $request->order_number ?: $request->ordernumber)
+                          ->where('vendor_id', $vdata)
+                          ->first();
 
-        $customStatus = CustomStatus::where('vendor_id', $vdata)
-                                  ->where('type', 1)
-                                  ->where('is_available', 1)
-                                  ->orderBy('order_sequence')
-                                  ->get();
+        $orderdetails = OrderDetails::where('order_id', $status->id)->get();
 
-        return response()->json([
-            'status' => 1,
-            'order' => $order,
-            'order_details' => $orderDetails,
-            'custom_status' => $customStatus
-        ]);
+        // Build summary array for view
+        $summery = [
+            'id' => $status->id,
+            'tax' => $status->tax,
+            'tax_name' => $status->tax_name,
+            'discount_amount' => $status->discount_amount,
+            'order_number' => $status->order_number,
+            'created_at' => $status->date,
+            'delivery_charge' => $status->delivery_charge,
+            'address' => $status->address,
+            'building' => $status->building,
+            'landmark' => $status->landmark,
+            'pincode' => $status->pincode,
+            'order_notes' => $status->order_notes,
+            'status' => $status->status,
+            'status_type' => $status->status_type,
+            'order_type' => $status->order_type,
+            'couponcode' => $status->couponcode,
+            'offer_type' => $status->offer_type,
+            'sub_total' => $status->sub_total,
+            'grand_total' => $status->grand_total,
+            'customer_name' => $status->customer_name,
+            'customer_email' => $status->customer_email,
+            'mobile' => $status->mobile,
+        ];
+
+        // Check if it's a view request (return view) or API request (return JSON)
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'status' => 1,
+                'order' => $status,
+                'orderdata' => $orderdata,
+                'order_details' => $orderdetails,
+                'summery' => $summery
+            ]);
+        }
+
+        return view('front.track-order', compact('vdata', 'storeinfo', 'orderdata', 'summery', 'orderdetails'));
     }
 
     /**
@@ -423,46 +467,108 @@ class OrderController extends Controller
      */
     public function cancel(Request $request, $orderNumber)
     {
-        $vdata = Session::get('restaurant_id');
+        $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
+        $storeinfo = $this->getStoreInfo($request);
 
-        $order = Order::where('order_number', $orderNumber)
-                     ->where('vendor_id', $vdata)
-                     ->first();
+        $orderdata = Order::where('order_number', $orderNumber ?: $request->ordernumber)
+                          ->where('vendor_id', $vdata)
+                          ->first();
 
-        if (!$order) {
-            return response()->json(['status' => 0, 'message' => 'Commande introuvable'], 404);
+        if (!$orderdata) {
+            return redirect()->back()->with('error', trans('messages.order_not_found'));
         }
 
-        // Check if order can be cancelled (within time limit)
-        if (!$this->canCancelOrder($order)) {
-            return response()->json(['status' => 0, 'message' => 'Cette commande ne peut plus être annulée'], 400);
+        // Check current status
+        if ($orderdata->status_type == 2) {
+            return redirect()->back()->with('error', trans('messages.already_accepted'));
+        } else if ($orderdata->status_type == 4) {
+            return redirect()->back()->with('error', trans('messages.already_rejected'));
+        } else if ($orderdata->status_type == 3) {
+            return redirect()->back()->with('error', trans('messages.already_delivered'));
+        }
+
+        // Get cancelled status from CustomStatus
+        $defaultsatus = CustomStatus::where('vendor_id', $storeinfo->id)
+                                    ->where('order_type', $orderdata->order_type)
+                                    ->where('type', 4)
+                                    ->where('is_available', 1)
+                                    ->where('is_deleted', 2)
+                                    ->first();
+
+        if (empty($defaultsatus)) {
+            return redirect()->back()->with('error', trans('messages.wrong'));
         }
 
         try {
             DB::beginTransaction();
 
             // Update order status
-            $order->status_type = 5; // Cancelled
-            $order->save();
+            $orderdata->status_type = $defaultsatus->type;
+            $orderdata->status = $defaultsatus->id;
+            $orderdata->update();
 
-            // Restore stock if needed
-            $this->restoreStock($order);
+            // Restore stock
+            $orderdetails = OrderDetails::where('order_id', $orderdata->id)->get();
+            foreach ($orderdetails as $order) {
+                if ($order->variants_id != null && $order->variants_id != "") {
+                    $item = Variants::where('id', $order->variants_id)
+                                   ->where('item_id', $order->item_id)
+                                   ->first();
+                } else {
+                    $item = Item::where('id', $order->item_id)
+                               ->where('vendor_id', $storeinfo->id)
+                               ->first();
+                }
+                if ($item) {
+                    $item->qty = $item->qty + $order->qty;
+                    $item->update();
+                }
+            }
 
-            // Log cancellation
+            // Get status title
+            $title = helper::gettype($orderdata->status, $orderdata->status_type, $orderdata->order_type, $storeinfo->id)->name;
+            $message_text = 'Order ' . $orderdata->order_number . ' has been cancelled by ' . ($orderdata->customer_name ?? 'customer');
+            
+            // Email configuration and send
+            $emaildata = helper::emailconfigration($storeinfo->id);
+            Config::set('mail', $emaildata);
+            helper::cancel_order($storeinfo->email, $storeinfo->name, $title, $message_text, $orderdata);
+            
+            // Push notification to vendor
+            $vendorData = User::select('id', 'name', 'slug', 'email', 'mobile', 'token')
+                             ->where('id', $orderdata->vendor_id)
+                             ->first();
+            if ($vendorData && $vendorData->token) {
+                $body = "#" . $orderNumber . " has been cancelled";
+                helper::push_notification($vendorData->token, $title, $body, "order", $orderdata->id);
+            }
+
+            // Audit log
             AuditService::logAdminAction(
                 'CANCEL_ORDER',
                 'Order',
-                ['reason' => 'Customer cancellation'],
-                $order->id
+                [
+                    'reason' => 'Customer cancellation',
+                    'title' => $title,
+                    'notification_sent' => true,
+                    'email_sent' => true
+                ],
+                $orderdata->id
             );
 
             DB::commit();
 
-            return response()->json(['status' => 1, 'message' => 'Commande annulée avec succès']);
+            return redirect()->back()->with('success', trans('messages.success'));
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 0, 'message' => 'Erreur lors de l\'annulation'], 500);
+            
+            AuditService::logSecurityEvent('ORDER_CANCELLATION_FAILED', [
+                'error' => $e->getMessage(),
+                'order_number' => $orderNumber
+            ]);
+            
+            return redirect()->back()->with('error', trans('messages.wrong'));
         }
     }
 
