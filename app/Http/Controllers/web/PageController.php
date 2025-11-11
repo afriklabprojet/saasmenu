@@ -27,7 +27,7 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         // Cache about page for 1 hour (3600 seconds)
         $aboutus = Cache::remember("about_page_{$vdata}", 3600, function () use ($vdata) {
             return About::where('vendor_id', $vdata)->first();
@@ -53,7 +53,7 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         // Cache terms page for 1 hour (3600 seconds)
         $terms = Cache::remember("terms_page_{$vdata}", 3600, function () use ($vdata) {
             return Terms::where('vendor_id', $vdata)->first();
@@ -79,7 +79,7 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         // Cache privacy policy page for 1 hour (3600 seconds)
         $privacypolicy = Cache::remember("privacy_page_{$vdata}", 3600, function () use ($vdata) {
             return Privacypolicy::where('vendor_id', $vdata)->first();
@@ -105,7 +105,7 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        
+
         // Cache refund policy page for 1 hour (3600 seconds)
         $refundprivacypolicy = Cache::remember("refund_page_{$vdata}", 3600, function () use ($vdata) {
             return RefundPrivacypolicy::where('vendor_id', $vdata)->first();

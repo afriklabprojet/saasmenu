@@ -705,7 +705,7 @@ Route::group(['prefix' => $prefix, 'middleware' => 'FrontMiddleware'], function 
     Route::get('/terms_condition', function () {
         return redirect()->route('front.terms', ['vendor' => request()->route('vendor') ?? '']);
     })->name('front.terms.legacy');
-    
+
     Route::get('/privacypolicy', function () {
         return redirect()->route('front.privacy', ['vendor' => request()->route('vendor') ?? '']);
     })->name('front.privacy.legacy');

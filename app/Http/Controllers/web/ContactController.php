@@ -88,11 +88,11 @@ class ContactController extends Controller
             // Send email notification to vendor
             try {
                 $vendordata = User::where('id', $vdata)->first();
-                
+
                 if ($vendordata && $vendordata->email) {
                     $emaildata = helper::emailconfigration($vendordata->id);
                     Config::set('mail', $emaildata);
-                    
+
                     helper::vendor_contact_data(
                         $vendordata->name,
                         $vendordata->email,
@@ -101,7 +101,7 @@ class ContactController extends Controller
                         $request->mobile,
                         $request->message
                     );
-                    
+
                     Log::info('Contact email notification sent', [
                         'vendor_id' => $vdata,
                         'contact_id' => $contact->id
