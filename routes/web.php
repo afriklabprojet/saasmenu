@@ -798,3 +798,7 @@ require __DIR__ . '/pwa.php';
 // Language switching routes
 Route::get('/lang/{locale}', [App\Http\Controllers\LanguageController::class, 'switch'])->name('lang.switch');
 Route::get('/api/lang/current', [App\Http\Controllers\LanguageController::class, 'current'])->name('lang.current');
+
+// 🚀 ROUTES V2 - CONTRÔLEURS REFACTORISÉS
+// Phase 1 : Déploiement parallèle (routes préfixées /v2)
+require __DIR__ . '/web_v2_migration.php';
