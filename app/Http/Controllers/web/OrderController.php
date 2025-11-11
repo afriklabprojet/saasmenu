@@ -162,7 +162,7 @@ class OrderController extends Controller
     public function success(Request $request)
     {
         $orderNumber = $request->route('order_number') ?: $request->order_number;
-        
+
         // Resolve vendor and load store info
         $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
         $storeinfo = $this->getStoreInfo($request);
@@ -178,7 +178,7 @@ class OrderController extends Controller
 
         // Generate WhatsApp message
         $whmessage = helper::whatsappmessage($orderNumber, $vdata, $storeinfo);
-        
+
         $settingdata = helper::appdata($vdata);
 
         // Audit log
@@ -269,24 +269,24 @@ class OrderController extends Controller
         if ($request->promocode == "") {
             return response()->json(["status" => 0, "message" => trans('messages.enter_promocode')], 200);
         }
-        
+
         $promocode = Coupons::where('code', $request->promocode)
                             ->where('vendor_id', $request->vendor_id)
                             ->first();
-        
+
         if (!$promocode) {
             return response()->json(['status' => 0, 'message' => trans('messages.wrong_promocode')], 200);
         }
-        
+
         // Set timezone if defined
         if (@helper::appdata($request->vendor_id)->timezone != "") {
             date_default_timezone_set(helper::appdata($request->vendor_id)->timezone);
         }
-        
+
         $current_date = date('Y-m-d');
         $start_date = date('Y-m-d', strtotime($promocode->active_from));
         $end_date = date('Y-m-d', strtotime($promocode->active_to));
-        
+
         if ($start_date <= $current_date && $current_date <= $end_date) {
             if ($promocode->limit > 0) {
                 if ($request->sub_total < @$promocode->price) {
@@ -297,7 +297,7 @@ class OrderController extends Controller
                     'offer_code' => @$promocode->code,
                     'offer_type' => 'promocode',
                 ]);
-                
+
                 // Audit log
                 AuditService::logAdminAction(
                     'APPLY_PROMOCODE',
@@ -309,7 +309,7 @@ class OrderController extends Controller
                     ],
                     $promocode->id
                 );
-                
+
                 return response()->json(['status' => 1, 'message' => trans('messages.promocode_applied'), 'data' => $promocode], 200);
             } else {
                 return response()->json(['status' => 0, 'message' => trans('messages.limit_over')], 200);
@@ -325,14 +325,14 @@ class OrderController extends Controller
     public function removePromocode(Request $request)
     {
         session()->forget(['offer_amount', 'offer_code', 'offer_type']);
-        
+
         // Audit log
         AuditService::logAdminAction(
             'REMOVE_PROMOCODE',
             'Coupons',
             ['vendor_id' => $request->vendor_id ?? Session::get('restaurant_id')]
         );
-        
+
         return response()->json(['status' => 1, 'message' => trans('messages.promocode_removed')], 200);
     }
 
@@ -343,23 +343,23 @@ class OrderController extends Controller
     {
         try {
             $vdata = $this->getVendorId($request) ?: $request->vendor_id;
-            
+
             $timezone = helper::appdata($vdata);
             $slots = [];
-            
+
             date_default_timezone_set($timezone->timezone);
 
             if ($request->inputDate != "" && $request->inputDate != null) {
                 $day = date('l', strtotime($request->inputDate));
-                
+
                 $time = Timing::where('vendor_id', $vdata)
                               ->where('day', $day)
                               ->first();
-                              
+
                 if (!$time) {
                     return response()->json(['status' => 0, 'message' => trans('messages.no_timing_available')], 200);
                 }
-                
+
                 if ($time->is_always_close == 1) {
                     $slots = "1"; // Restaurant closed
                 } else {
@@ -371,18 +371,18 @@ class OrderController extends Controller
                     if (helper::appdata($vdata)->interval_type == 1) {
                         $minute = helper::appdata($vdata)->interval_time;
                     }
-                    
+
                     $duration = $minute;
                     $cleanup = 0;
                     $start = $time->open_time;
                     $break_start = $time->break_start;
                     $break_end = $time->break_end;
                     $end = $time->close_time;
-                    
+
                     $firsthalf = $this->firsthalf($duration, $cleanup, $start, $break_start);
                     $secondhalf = $this->secondhalf($duration, $cleanup, $break_end, $end);
                     $period = array_merge($firsthalf, $secondhalf);
-                    
+
                     $currenttime = Carbon::now()->format('h:i a');
                     $current_date = Carbon::now()->format('Y-m-d');
 
@@ -420,7 +420,7 @@ class OrderController extends Controller
         $interval = new DateInterval('PT' . $duration . 'M');
         $cleanupinterval = new DateInterval('PT' . $cleanup . 'M');
         $slots = array();
-        
+
         for ($intStart = $start; $intStart < $break_start; $intStart->add($interval)->add($cleanupinterval)) {
             $endperiod = clone $intStart;
             $endperiod->add($interval);
@@ -446,7 +446,7 @@ class OrderController extends Controller
         $interval = new DateInterval('PT' . $duration . 'M');
         $cleanupinterval = new DateInterval('PT' . $cleanup . 'M');
         $slots = array();
-        
+
         for ($intStart = $break_end; $intStart < $end; $intStart->add($interval)->add($cleanupinterval)) {
             $endperiod = clone $intStart;
             $endperiod->add($interval);
@@ -469,7 +469,7 @@ class OrderController extends Controller
     public function ordercreate(Request $request)
     {
         $paymentid = "";
-        
+
         // Extract payment ID from different gateway responses
         if ($request->paymentId != "") {
             $paymentid = $request->paymentId;
@@ -540,7 +540,7 @@ class OrderController extends Controller
         // Get user/session
         $user_id = Auth::check() && Auth::user()->type == 3 ? Auth::user()->id : null;
         $session_id = $user_id ? null : Session::getId();
-        
+
         // Create order using helper
         $orderresponse = helper::createorder(
             Session::get('vendor_id'),
@@ -610,23 +610,23 @@ class OrderController extends Controller
         // Determine vendor_id and buynow flag
         $vendor_id = $request->payment_type == 6 ? $request->modal_vendor_id : $request->vendor_id;
         $buynow = $request->payment_type == 6 ? $request->modal_buynow : ($request->buynow ?? 0);
-        
+
         // Get user or session
         $user_id = Auth::check() && Auth::user()->type == 3 ? Auth::user()->id : null;
         $session_id = Auth::check() ? null : Session::getId();
-        
+
         $storeinfo = helper::storeinfo($request->vendor);
-        
+
         // Get and validate cart
         $cartitems = Cart::select('carts.id', 'carts.item_id', 'carts.item_name', 'carts.item_price', 'carts.qty', 'carts.price', 'carts.tax', 'carts.variants_id')
             ->where('carts.vendor_id', $vendor_id);
-        
+
         if ($user_id) {
             $cartitems->where('carts.user_id', $user_id);
         } else {
             $cartitems->where('carts.session_id', $session_id);
         }
-        
+
         $cartitems->where('carts.buynow', $buynow);
         $cartdata = $cartitems->get();
 
@@ -645,7 +645,7 @@ class OrderController extends Controller
         $tax_total = 0;
         $tax_name = [];
         $tax_price = [];
-        
+
         foreach ($cartdata as $cart) {
             $taxlist = helper::gettax($cart->tax);
             if (!empty($taxlist)) {
@@ -676,20 +676,20 @@ class OrderController extends Controller
                 }
             }
         }
-        
+
         $tax_total = array_sum($tax_price);
-        
+
         // Prepare order data
         $payment_id = $request->payment_id ?? "";
         $filename = "";
-        
+
         // Handle payment type 6 (Bank transfer with screenshot)
         if ($request->payment_type == '6') {
             if ($request->hasFile('screenshot')) {
                 $filename = 'screenshot-' . uniqid() . "." . $request->file('screenshot')->getClientOriginalExtension();
                 $request->file('screenshot')->move(env('ASSETPATHURL') . 'admin-assets/images/screenshot/', $filename);
             }
-            
+
             // Use modal_ prefixed fields for payment type 6
             $orderresponse = helper::createorder(
                 $request->modal_vendor_id,
@@ -756,16 +756,16 @@ class OrderController extends Controller
                 $buynow
             );
         }
-        
+
         // Handle response
         if ($orderresponse == -1) {
             return response()->json(['status' => 0, 'message' => trans('messages.cart_empty')], 200);
         }
-        
+
         if ($orderresponse == "false") {
             return response()->json(['status' => 0, 'message' => trans('messages.order_not_placed')], 200);
         }
-        
+
         // Decrement coupon limit if used
         if ($request->offer_type == "promocode" && $request->couponcode != null) {
             $promocode = Coupons::where('code', $request->couponcode)
@@ -775,7 +775,7 @@ class OrderController extends Controller
                 $promocode->decrement('limit', 1);
             }
         }
-        
+
         // Audit log
         AuditService::logAdminAction(
             'CREATE_ORDER_VIA_PAYMENT',
@@ -786,7 +786,7 @@ class OrderController extends Controller
                 'grand_total' => $request->grand_total ?? $request->modal_grand_total
             ]
         );
-        
+
         // Return success response
         if ($request->payment_type == '6') {
             return redirect($request->slug . '/success/' . $orderresponse)
@@ -868,12 +868,12 @@ class OrderController extends Controller
             // Get status title
             $title = helper::gettype($orderdata->status, $orderdata->status_type, $orderdata->order_type, $storeinfo->id)->name;
             $message_text = 'Order ' . $orderdata->order_number . ' has been cancelled by ' . ($orderdata->customer_name ?? 'customer');
-            
+
             // Email configuration and send
             $emaildata = helper::emailconfigration($storeinfo->id);
             Config::set('mail', $emaildata);
             helper::cancel_order($storeinfo->email, $storeinfo->name, $title, $message_text, $orderdata);
-            
+
             // Push notification to vendor
             $vendorData = User::select('id', 'name', 'slug', 'email', 'mobile', 'token')
                              ->where('id', $orderdata->vendor_id)
@@ -902,12 +902,12 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             AuditService::logSecurityEvent('ORDER_CANCELLATION_FAILED', [
                 'error' => $e->getMessage(),
                 'order_number' => $orderNumber
             ]);
-            
+
             return redirect()->back()->with('error', trans('messages.wrong'));
         }
     }
@@ -1024,23 +1024,23 @@ class OrderController extends Controller
     private function calculateTax($subtotal, $vendorId)
     {
         $cartItems = $this->getCartItems($vendorId);
-        
+
         $tax_total = 0;
         $tax_name = [];
         $tax_price = [];
-        
+
         foreach ($cartItems as $cart) {
             $taxlist = helper::gettax($cart->tax);
-            
+
             if (!empty($taxlist)) {
                 foreach ($taxlist as $tax) {
                     if (!empty($tax)) {
                         $producttax = helper::taxRate($tax->tax, $cart->price, $cart->qty, $tax->type);
-                        
+
                         // Aggregate by tax name
                         if (!in_array($tax->name, $tax_name)) {
                             $tax_name[] = $tax->name;
-                            
+
                             // Calculate price based on type (1=fixed, 2=percentage)
                             if ($tax->type == 1) {
                                 $price = $tax->tax * $cart->qty;
@@ -1066,10 +1066,10 @@ class OrderController extends Controller
                 }
             }
         }
-        
+
         // Sum all taxes
         $tax_total = array_sum($tax_price);
-        
+
         return $tax_total;
     }
 
@@ -1088,18 +1088,18 @@ class OrderController extends Controller
                                        ->where('vendor_id', $vendorId)
                                        ->where('is_available', 1)
                                        ->first();
-            
+
             if ($deliveryArea) {
                 return $deliveryArea->delivery_charge ?? 0;
             }
         }
-        
+
         // Fallback: get default or first delivery area
         $defaultArea = DeliveryArea::where('vendor_id', $vendorId)
                                    ->where('is_available', 1)
                                    ->orderBy('id', 'asc')
                                    ->first();
-        
+
         return $defaultArea ? ($defaultArea->delivery_charge ?? 0) : 0;
     }
 
@@ -1150,10 +1150,10 @@ class OrderController extends Controller
                                 ->where('session_id', Session::getId())
                                 ->first();
                 }
-                
+
                 $variant = Variants::where('id', $cart->variants_id)->first();
                 $item_name = Item::select('item_name')->where('id', $cart->item_id)->first();
-                
+
                 if ($variant && $variant->stock_management == 1) {
                     // Min order validation
                     if ($variant->min_order != null && $variant->min_order != "" && $variant->min_order != 0) {
@@ -1161,14 +1161,14 @@ class OrderController extends Controller
                             throw new \Exception(trans('messages.min_qty_message') . $variant->min_order . " " . ($item_name->item_name));
                         }
                     }
-                    
+
                     // Max order validation
                     if ($variant->max_order != null && $variant->max_order != "" && $variant->max_order != 0) {
                         if ($variant->max_order < $cartqty->totalqty) {
                             throw new \Exception(trans('messages.max_qty_message') . $variant->max_order . ' ' . ($item_name->item_name));
                         }
                     }
-                    
+
                     // Stock validation
                     if ($cart->qty > $variant->qty) {
                         throw new \Exception(trans('messages.cart_qty_msg') . ' ' . trans('labels.out_of_stock_msg') . ' ' . $item_name->item_name . '(' . $variant->name . ')');
@@ -1177,7 +1177,7 @@ class OrderController extends Controller
             } else {
                 // Items without variants
                 $item = Item::where('id', $cart->item_id)->first();
-                
+
                 if (Auth::check()) {
                     $cartqty = Cart::selectRaw('SUM(qty) as totalqty')
                                 ->where('item_id', $cart->item_id)
@@ -1189,20 +1189,20 @@ class OrderController extends Controller
                                 ->where('session_id', Session::getId())
                                 ->first();
                 }
-                
+
                 if ($item && $item->stock_management == 1) {
                     if ($item->min_order != null && $item->min_order != "" && $item->min_order != 0) {
                         if ($cartqty->totalqty < $item->min_order) {
                             throw new \Exception(trans('messages.min_qty_message') . $item->min_order . ' ' . ($item->item_name));
                         }
                     }
-                    
+
                     if ($item->max_order != null && $item->max_order != "" && $item->max_order != 0) {
                         if ($item->max_order < $cartqty->totalqty) {
                             throw new \Exception(trans('messages.max_qty_message') . $item->max_order . ' ' . ($item->item_name));
                         }
                     }
-                    
+
                     if ($cart->qty > $item->qty) {
                         throw new \Exception(trans('messages.cart_qty_msg') . ' ' . trans('labels.out_of_stock_msg') . ' ' . $item->item_name);
                     }
