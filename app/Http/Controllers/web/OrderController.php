@@ -598,7 +598,7 @@ class OrderController extends Controller
         $cartItems = $this->getCartItems($vendorId);
         $subTotal = $this->calculateSubTotal($cartItems);
         $taxAmount = $this->calculateTax($subTotal, $vendorId);
-        $deliveryCharge = $this->calculateDeliveryCharge($request->order_type, $vendorId);
+        $deliveryCharge = $this->calculateDeliveryCharge($request->order_type, $vendorId, $request->delivery_area ?? null);
         $grandTotal = $subTotal + $taxAmount + $deliveryCharge;
 
         $order = new Order();
@@ -679,25 +679,88 @@ class OrderController extends Controller
     }
 
     /**
-     * Calculate tax
+     * Calculate tax aggregated from cart items
      */
     private function calculateTax($subtotal, $vendorId)
     {
-        // Implement tax calculation logic based on vendor settings
-        return 0; // Placeholder
+        $cartItems = $this->getCartItems($vendorId);
+        
+        $tax_total = 0;
+        $tax_name = [];
+        $tax_price = [];
+        
+        foreach ($cartItems as $cart) {
+            $taxlist = helper::gettax($cart->tax);
+            
+            if (!empty($taxlist)) {
+                foreach ($taxlist as $tax) {
+                    if (!empty($tax)) {
+                        $producttax = helper::taxRate($tax->tax, $cart->price, $cart->qty, $tax->type);
+                        
+                        // Aggregate by tax name
+                        if (!in_array($tax->name, $tax_name)) {
+                            $tax_name[] = $tax->name;
+                            
+                            // Calculate price based on type (1=fixed, 2=percentage)
+                            if ($tax->type == 1) {
+                                $price = $tax->tax * $cart->qty;
+                            } else if ($tax->type == 2) {
+                                $price = ($tax->tax / 100) * ($cart->price * $cart->qty);
+                            } else {
+                                $price = 0;
+                            }
+                            $tax_price[] = $price;
+                        } else {
+                            // Add to existing tax
+                            $index = array_search($tax->name, $tax_name);
+                            if ($tax->type == 1) {
+                                $price = $tax->tax * $cart->qty;
+                            } else if ($tax->type == 2) {
+                                $price = ($tax->tax / 100) * ($cart->price * $cart->qty);
+                            } else {
+                                $price = 0;
+                            }
+                            $tax_price[$index] += $price;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Sum all taxes
+        $tax_total = array_sum($tax_price);
+        
+        return $tax_total;
     }
 
     /**
-     * Calculate delivery charge
+     * Calculate delivery charge based on delivery area
      */
-    private function calculateDeliveryCharge($orderType, $vendorId)
+    private function calculateDeliveryCharge($orderType, $vendorId, $deliveryAreaId = null)
     {
         if ($orderType == 2) { // Pickup
             return 0;
         }
 
-        // Implement delivery charge calculation
-        return 0; // Placeholder
+        // If delivery area ID provided, get its charge
+        if ($deliveryAreaId) {
+            $deliveryArea = DeliveryArea::where('id', $deliveryAreaId)
+                                       ->where('vendor_id', $vendorId)
+                                       ->where('is_available', 1)
+                                       ->first();
+            
+            if ($deliveryArea) {
+                return $deliveryArea->delivery_charge ?? 0;
+            }
+        }
+        
+        // Fallback: get default or first delivery area
+        $defaultArea = DeliveryArea::where('vendor_id', $vendorId)
+                                   ->where('is_available', 1)
+                                   ->orderBy('id', 'asc')
+                                   ->first();
+        
+        return $defaultArea ? ($defaultArea->delivery_charge ?? 0) : 0;
     }
 
     /**
