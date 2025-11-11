@@ -6,9 +6,12 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use App\Models\Contact;
 use App\Models\Subscriber;
 use App\Models\TableBook;
+use App\Models\User;
 use App\Helpers\helper;
 use App\Services\AuditService;
 use Carbon\Carbon;
@@ -81,6 +84,36 @@ class ContactController extends Controller
             $contact->message = strip_tags($request->message);
             $contact->created_at = Carbon::now();
             $contact->save();
+
+            // Send email notification to vendor
+            try {
+                $vendordata = User::where('id', $vdata)->first();
+                
+                if ($vendordata && $vendordata->email) {
+                    $emaildata = helper::emailconfigration($vendordata->id);
+                    Config::set('mail', $emaildata);
+                    
+                    helper::vendor_contact_data(
+                        $vendordata->name,
+                        $vendordata->email,
+                        $request->name,
+                        $request->email,
+                        $request->mobile,
+                        $request->message
+                    );
+                    
+                    Log::info('Contact email notification sent', [
+                        'vendor_id' => $vdata,
+                        'contact_id' => $contact->id
+                    ]);
+                }
+            } catch (\Exception $emailError) {
+                // Log error but don't fail the contact submission
+                Log::error('Contact email notification failed', [
+                    'vendor_id' => $vdata,
+                    'error' => $emailError->getMessage()
+                ]);
+            }
 
             // Log contact submission
             AuditService::logAdminAction(
