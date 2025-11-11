@@ -19,10 +19,13 @@ use App\Models\TableQR;
 use App\Models\User;
 use App\Models\Settings;
 use App\Models\Variants;
+use App\Models\Timing;
 use App\Helpers\helper;
 use App\Services\AuditService;
 use Illuminate\Support\Facades\Config;
 use Carbon\Carbon;
+use DateTime;
+use DateInterval;
 use App\Http\Controllers\web\Traits\VendorDataTrait;
 
 class OrderController extends Controller
@@ -287,6 +290,132 @@ class OrderController extends Controller
         );
         
         return response()->json(['status' => 1, 'message' => trans('messages.promocode_removed')], 200);
+    }
+
+    /**
+     * Get available time slots for delivery/pickup
+     */
+    public function timeslot(Request $request)
+    {
+        try {
+            $vdata = $this->getVendorId($request) ?: $request->vendor_id;
+            
+            $timezone = helper::appdata($vdata);
+            $slots = [];
+            
+            date_default_timezone_set($timezone->timezone);
+
+            if ($request->inputDate != "" && $request->inputDate != null) {
+                $day = date('l', strtotime($request->inputDate));
+                
+                $time = Timing::where('vendor_id', $vdata)
+                              ->where('day', $day)
+                              ->first();
+                              
+                if (!$time) {
+                    return response()->json(['status' => 0, 'message' => trans('messages.no_timing_available')], 200);
+                }
+                
+                if ($time->is_always_close == 1) {
+                    $slots = "1"; // Restaurant closed
+                } else {
+                    // Calculate slot duration in minutes
+                    $minute = "";
+                    if (helper::appdata($vdata)->interval_type == 2) {
+                        $minute = (float)helper::appdata($vdata)->interval_time * 60;
+                    }
+                    if (helper::appdata($vdata)->interval_type == 1) {
+                        $minute = helper::appdata($vdata)->interval_time;
+                    }
+                    
+                    $duration = $minute;
+                    $cleanup = 0;
+                    $start = $time->open_time;
+                    $break_start = $time->break_start;
+                    $break_end = $time->break_end;
+                    $end = $time->close_time;
+                    
+                    $firsthalf = $this->firsthalf($duration, $cleanup, $start, $break_start);
+                    $secondhalf = $this->secondhalf($duration, $cleanup, $break_end, $end);
+                    $period = array_merge($firsthalf, $secondhalf);
+                    
+                    $currenttime = Carbon::now()->format('h:i a');
+                    $current_date = Carbon::now()->format('Y-m-d');
+
+                    foreach ($period as $item) {
+                        if ($request->inputDate == $current_date) {
+                            $slottime = explode('-', $item);
+                            if (strtotime($slottime[0]) <= strtotime($currenttime)) {
+                                $status = "";
+                            } else {
+                                $status = "active";
+                            }
+                        } else {
+                            $status = "active";
+                        }
+                        $slots[] = array(
+                            'slot' => $item,
+                            'status' => $status,
+                        );
+                    }
+                }
+            }
+            return $slots;
+        } catch (\Throwable $th) {
+            return response()->json(['status' => 0, 'message' => trans('messages.wrong')], 200);
+        }
+    }
+
+    /**
+     * Generate time slots for first half (before break)
+     */
+    private function firsthalf($duration, $cleanup, $start, $break_start)
+    {
+        $start = new DateTime($start);
+        $break_start = new DateTime($break_start);
+        $interval = new DateInterval('PT' . $duration . 'M');
+        $cleanupinterval = new DateInterval('PT' . $cleanup . 'M');
+        $slots = array();
+        
+        for ($intStart = $start; $intStart < $break_start; $intStart->add($interval)->add($cleanupinterval)) {
+            $endperiod = clone $intStart;
+            $endperiod->add($interval);
+            if (strtotime($break_start->format('h:i A')) < strtotime($endperiod->format('h:i A')) && strtotime($endperiod->format('h:i A')) < strtotime($break_start->format('h:i A'))) {
+                $endperiod = $break_start;
+                $slots[] = $intStart->format('h:i A') . ' - ' . $endperiod->format('h:i A');
+                $intStart = $break_start;
+                $endperiod = $break_start;
+                $intStart->sub($interval);
+            }
+            $slots[] = $intStart->format('h:i A') . ' - ' . $endperiod->format('h:i A');
+        }
+        return $slots;
+    }
+
+    /**
+     * Generate time slots for second half (after break)
+     */
+    private function secondhalf($duration, $cleanup, $break_end, $end)
+    {
+        $break_end = new DateTime($break_end);
+        $end = new DateTime($end);
+        $interval = new DateInterval('PT' . $duration . 'M');
+        $cleanupinterval = new DateInterval('PT' . $cleanup . 'M');
+        $slots = array();
+        
+        for ($intStart = $break_end; $intStart < $end; $intStart->add($interval)->add($cleanupinterval)) {
+            $endperiod = clone $intStart;
+            $endperiod->add($interval);
+            if (strtotime($end->format('h:i A')) < strtotime($endperiod->format('h:i A')) && strtotime($endperiod->format('h:i A')) < strtotime($break_end->format('h:i A'))) {
+                $endperiod = $end;
+                $slots[] = $intStart->format('h:i A') . ' - ' . $endperiod->format('h:i A');
+                $intStart = $end;
+                $endperiod = $end;
+                $intStart->sub($interval);
+            }
+            $slots[] = $intStart->format('h:i A') . ' - ' . $endperiod->format('h:i A');
+        }
+        return $slots;
     }
 
     /**
