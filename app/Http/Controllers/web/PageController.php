@@ -5,6 +5,7 @@ namespace App\Http\Controllers\web;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cache;
 use App\Models\About;
 use App\Models\Terms;
 use App\Models\Privacypolicy;
@@ -15,6 +16,7 @@ class PageController extends Controller
 {
     /**
      * Display about us page
+     * Cached for 1 hour to improve performance
      */
     public function aboutUs(Request $request)
     {
@@ -25,7 +27,11 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        $aboutus = About::where('vendor_id', $vdata)->first();
+        
+        // Cache about page for 1 hour (3600 seconds)
+        $aboutus = Cache::remember("about_page_{$vdata}", 3600, function () use ($vdata) {
+            return About::where('vendor_id', $vdata)->first();
+        });
 
         if (!$aboutus) {
             return redirect('/')->with('error', 'Page À propos non disponible');
@@ -36,6 +42,7 @@ class PageController extends Controller
 
     /**
      * Display terms and conditions
+     * Cached for 1 hour to improve performance
      */
     public function termsConditions(Request $request)
     {
@@ -46,7 +53,11 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        $terms = Terms::where('vendor_id', $vdata)->first();
+        
+        // Cache terms page for 1 hour (3600 seconds)
+        $terms = Cache::remember("terms_page_{$vdata}", 3600, function () use ($vdata) {
+            return Terms::where('vendor_id', $vdata)->first();
+        });
 
         if (!$terms) {
             return redirect('/')->with('error', 'Conditions d\'utilisation non disponibles');
@@ -57,6 +68,7 @@ class PageController extends Controller
 
     /**
      * Display privacy policy
+     * Cached for 1 hour to improve performance
      */
     public function privacyPolicy(Request $request)
     {
@@ -67,7 +79,11 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        $privacypolicy = Privacypolicy::where('vendor_id', $vdata)->first();
+        
+        // Cache privacy policy page for 1 hour (3600 seconds)
+        $privacypolicy = Cache::remember("privacy_page_{$vdata}", 3600, function () use ($vdata) {
+            return Privacypolicy::where('vendor_id', $vdata)->first();
+        });
 
         if (!$privacypolicy) {
             return redirect('/')->with('error', 'Politique de confidentialité non disponible');
@@ -78,6 +94,7 @@ class PageController extends Controller
 
     /**
      * Display refund privacy policy
+     * Cached for 1 hour to improve performance
      */
     public function refundPrivacyPolicy(Request $request)
     {
@@ -88,7 +105,11 @@ class PageController extends Controller
         }
 
         $settingdata = helper::appdata($vdata);
-        $refundprivacypolicy = RefundPrivacypolicy::where('vendor_id', $vdata)->first();
+        
+        // Cache refund policy page for 1 hour (3600 seconds)
+        $refundprivacypolicy = Cache::remember("refund_page_{$vdata}", 3600, function () use ($vdata) {
+            return RefundPrivacypolicy::where('vendor_id', $vdata)->first();
+        });
 
         if (!$refundprivacypolicy) {
             return redirect('/')->with('error', 'Politique de remboursement non disponible');
