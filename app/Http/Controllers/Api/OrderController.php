@@ -65,7 +65,7 @@ class OrderController extends Controller
             'delivery_address' => $request->delivery_address,
             'special_instructions' => $request->special_instructions,
         ]);
-        
+
         // Set protected fields through direct assignment
         $order->restaurant_id = $request->restaurant_id;
         $order->order_number = 'ORD' . time();

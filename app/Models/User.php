@@ -24,7 +24,7 @@ class User extends Authenticatable
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
-     * 
+     *
      * Security: Reduced from 32 to 13 fields
      * Sensitive fields moved to $guarded
      */

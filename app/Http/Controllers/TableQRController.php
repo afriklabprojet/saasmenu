@@ -159,7 +159,7 @@ class TableQRController extends Controller
                 'table_id' => $table->id,
                 'special_instructions' => $request->special_instructions,
             ]);
-            
+
             // Set protected fields through direct assignment
             $order->restaurant_id = $restaurant->id;
             $order->order_number = 'TBL-' . strtoupper(Str::random(8));

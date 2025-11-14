@@ -31,7 +31,7 @@ class OptimizedOrderController extends Controller
             'vendor_id' => $request->vendor_id,
             'customer_id' => $request->customer_id,
         ]);
-        
+
         // Set protected fields
         $order->total = $request->total;
         $order->status = 'pending';

@@ -13,7 +13,7 @@ class Order extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * Security: Reduced from 22 to 10 fields
      * Sensitive financial and status fields moved to $guarded
      *

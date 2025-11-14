@@ -17,7 +17,7 @@ use App\Notifications\OrderStatusChanged;
 
 /**
  * Tests du workflow complet des commandes
- * 
+ *
  * Couvre le cycle de vie complet d'une commande:
  * 1. Création de commande
  * 2. Mise à jour du statut (Pending → Confirmed → Preparing → Ready → Delivered)
@@ -202,7 +202,7 @@ class OrderWorkflowTest extends TestCase
         $response = $this->post(route('v2.ordercreate'), $orderData);
 
         $response->assertSessionHas('error');
-        
+
         $this->assertDatabaseMissing('orders', [
             'user_id' => $this->customer->id,
         ]);
@@ -525,7 +525,7 @@ class OrderWorkflowTest extends TestCase
         $order = Order::where('user_id', $this->customer->id)->first();
 
         $this->assertEquals($discountAmount, $order->discount_amount);
-        
+
         $expectedTotal = ($this->item->item_price * 2) + 500 - $discountAmount;
         $this->assertEquals($expectedTotal, $order->grand_total);
     }

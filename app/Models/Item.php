@@ -13,7 +13,7 @@ class Item extends Model
 
     /**
      * The attributes that are mass assignable.
-     * 
+     *
      * Security: Reduced from 19 to 14 fields
      * Price and availability fields moved to $guarded
      *

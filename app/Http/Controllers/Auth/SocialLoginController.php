@@ -97,12 +97,12 @@ class SocialLoginController extends Controller
             'login_type' => $provider,
             'image' => $socialUser->getAvatar(),
         ]);
-        
+
         // Security fix: Set protected fields separately
         $user->type = 3; // Client par défaut
         $user->is_verified = 1; // Email déjà vérifié par le provider
         $user->save();
-        
+
         return $user;
     }
 
