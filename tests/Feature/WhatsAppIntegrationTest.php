@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Order;
-use App\Models\Vendor;
+use App\Models\Restaurant;
 use App\Jobs\SendWhatsAppMessageJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -30,25 +30,33 @@ class WhatsAppIntegrationTest extends TestCase
         Config::set('services.whatsapp.api_token', 'test_token');
         Config::set('services.whatsapp.phone_number_id', '123456789');
 
-        // Create test user
+        // Create test user (customer)
         $this->user = User::factory()->create([
-            'type' => 2, // Customer
+            'type' => 3, // Customer
             'mobile' => '+1234567890',
         ]);
 
-        // Create test vendor
-        $this->vendor = Vendor::factory()->create([
-            'name' => 'Test Restaurant',
+        // Create test vendor user
+        $vendorUser = User::factory()->create([
+            'type' => 2, // Vendor
             'mobile' => '+0987654321',
+        ]);
+
+        // Create restaurant for vendor
+        $this->vendor = Restaurant::factory()->create([
+            'user_id' => $vendorUser->id,
+            'restaurant_name' => 'Test Restaurant',
+            'restaurant_phone' => '+0987654321',
         ]);
 
         // Create test order
         $this->order = Order::factory()->create([
             'user_id' => $this->user->id,
-            'vendor_id' => $this->vendor->id,
+            'vendor_id' => $vendorUser->id,
             'order_number' => 'ORD-TEST-001',
-            'total' => 125.00,
-            'status' => 'pending',
+            'grand_total' => 125.00,
+            'sub_total' => 125.00,
+            'status' => 1, // Pending
         ]);
     }
 
@@ -132,11 +140,11 @@ class WhatsAppIntegrationTest extends TestCase
             ], 200),
         ]);
 
-        $this->order->update(['status' => 'preparing']);
+        $this->order->update(['status' => 4]); // Preparing
 
         $response = $this->postJson('/api/whatsapp/order-status', [
             'order_id' => $this->order->id,
-            'status' => 'preparing',
+            'status' => 4, // Preparing
         ]);
 
         $response->assertStatus(200);
