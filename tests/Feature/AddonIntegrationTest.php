@@ -28,7 +28,12 @@ class AddonIntegrationTest extends TestCase
 
         // Create test restaurant and admin user
         $this->restaurant = Restaurant::factory()->create();
-        $this->restaurantAdmin = User::factory()->create(['role' => 'restaurant_admin']);
+        $this->restaurantAdmin = User::forceCreate([
+            'name' => 'Restaurant Admin',
+            'email' => 'admin@restaurant.test',
+            'password' => bcrypt('password'),
+            'type' => 2, // Vendor
+        ]);
 
         RestaurantUser::create([
             'user_id' => $this->restaurantAdmin->id,
@@ -157,7 +162,7 @@ class AddonIntegrationTest extends TestCase
         ]);
 
         // Create customer
-        $customer = User::factory()->create(['role' => 'customer']);
+        $customer = User::factory()->create(['type' => 3]); // Customer
 
         // Enroll customer in loyalty program via API
         $response = $this->withHeaders([
@@ -401,7 +406,7 @@ class AddonIntegrationTest extends TestCase
         $terminal = POSTerminal::factory()->create(['restaurant_id' => $this->restaurant->id]);
         $program = LoyaltyProgram::factory()->create(['restaurant_id' => $this->restaurant->id]);
         $tableQr = TableQrCode::factory()->create(['restaurant_id' => $this->restaurant->id]);
-        $customer = User::factory()->create(['role' => 'customer']);
+        $customer = User::factory()->create(['type' => 3]); // Customer
 
         // Simulate a complete customer journey:
         // 1. Customer scans QR code

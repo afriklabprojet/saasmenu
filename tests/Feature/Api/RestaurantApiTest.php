@@ -63,7 +63,7 @@ class RestaurantApiTest extends TestCase
     public function it_can_get_restaurant_menu()
     {
         $vendor = User::factory()->create(['type' => 2]);
-        $restaurant = Restaurant::factory()->create(['vendor_id' => $vendor->id]);
+        $restaurant = Restaurant::factory()->create(['user_id' => $vendor->id]);
 
         $category = Category::factory()->create(['vendor_id' => $vendor->id]);
         Item::factory()->count(5)->create([
@@ -138,7 +138,7 @@ class RestaurantApiTest extends TestCase
     public function vendor_can_update_their_restaurant()
     {
         $vendor = User::factory()->create(['type' => 2]);
-        $restaurant = Restaurant::factory()->create(['vendor_id' => $vendor->id]);
+        $restaurant = Restaurant::factory()->create(['user_id' => $vendor->id]);
 
         Sanctum::actingAs($vendor);
 
@@ -163,7 +163,7 @@ class RestaurantApiTest extends TestCase
         $vendor1 = User::factory()->create(['type' => 2]);
         $vendor2 = User::factory()->create(['type' => 2]);
 
-        $restaurant = Restaurant::factory()->create(['vendor_id' => $vendor1->id]);
+        $restaurant = Restaurant::factory()->create(['user_id' => $vendor1->id]);
 
         Sanctum::actingAs($vendor2);
 

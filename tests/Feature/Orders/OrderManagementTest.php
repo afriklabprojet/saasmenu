@@ -19,7 +19,7 @@ class OrderManagementTest extends TestCase
     {
         $customer = User::factory()->create(['type' => 3]);
         $vendor = User::factory()->create(['type' => 2]);
-        $restaurant = Restaurant::factory()->create(['vendor_id' => $vendor->id]);
+        $restaurant = Restaurant::factory()->create(['user_id' => $vendor->id]);
 
         $category = Category::factory()->create(['vendor_id' => $vendor->id]);
         $item = Item::factory()->create([
