@@ -196,7 +196,7 @@ class FirebaseServiceTest extends TestCase
         $result = $this->firebaseService->sendNotification($notification);
         
         $this->assertFalse($result['success']);
-        $this->assertStringContains('title', $result['error']);
+        $this->assertStringContainsString('title', $result['error']);
     }
 
     /** @test */
@@ -291,7 +291,7 @@ class FirebaseServiceTest extends TestCase
         ]);
         
         $this->assertFalse($result['success']);
-        $this->assertStringContains('disabled', $result['error']);
+        $this->assertStringContainsString('disabled', $result['error']);
     }
 
     public function tearDown(): void

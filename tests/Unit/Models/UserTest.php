@@ -39,7 +39,7 @@ class UserTest extends TestCase
             'mobile' => '0987654321',
             'password' => bcrypt('password'),
             'type' => 2, // Vendor
-            
+
         ];
 
         $vendor = User::forceCreate($vendorData);
@@ -57,7 +57,7 @@ class UserTest extends TestCase
             'mobile' => '1122334455',
             'password' => bcrypt('password'),
             'type' => 3, // Customer
-            
+
         ];
 
         $customer = User::forceCreate($customerData);
@@ -75,7 +75,7 @@ class UserTest extends TestCase
             'mobile' => '1234567890',
             'password' => bcrypt('password'),
             'type' => 1,
-            
+
         ]);
 
         $this->expectException(\Illuminate\Database\QueryException::class);
@@ -86,7 +86,7 @@ class UserTest extends TestCase
             'mobile' => '0987654321',
             'password' => bcrypt('password'),
             'type' => 1,
-            
+
         ]);
     }
 

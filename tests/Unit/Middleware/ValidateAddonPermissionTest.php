@@ -38,7 +38,7 @@ class ValidateAddonPermissionTest extends TestCase
         }, 'pos');
         
         $this->assertEquals(401, $response->getStatusCode());
-        $this->assertStringContains('Authentication required', $response->getContent());
+        $this->assertStringContainsString('Authentication required', $response->getContent());
     }
 
     /** @test */
@@ -52,7 +52,7 @@ class ValidateAddonPermissionTest extends TestCase
         }, 'pos');
         
         $this->assertEquals(400, $response->getStatusCode());
-        $this->assertStringContains('Restaurant not specified', $response->getContent());
+        $this->assertStringContainsString('Restaurant not specified', $response->getContent());
     }
 
     /** @test */
@@ -67,7 +67,7 @@ class ValidateAddonPermissionTest extends TestCase
         }, 'pos');
         
         $this->assertEquals(404, $response->getStatusCode());
-        $this->assertStringContains('Restaurant not found', $response->getContent());
+        $this->assertStringContainsString('Restaurant not found', $response->getContent());
     }
 
     /** @test */
@@ -104,7 +104,7 @@ class ValidateAddonPermissionTest extends TestCase
         }, 'pos');
         
         $this->assertEquals(403, $response->getStatusCode());
-        $this->assertStringContains('Access denied', $response->getContent());
+        $this->assertStringContainsString('Access denied', $response->getContent());
     }
 
     /** @test */
@@ -183,7 +183,7 @@ class ValidateAddonPermissionTest extends TestCase
         }, 'loyalty');
         
         $this->assertEquals(403, $response->getStatusCode());
-        $this->assertStringContains('Addon not enabled', $response->getContent());
+        $this->assertStringContainsString('Addon not enabled', $response->getContent());
     }
 
     /** @test */

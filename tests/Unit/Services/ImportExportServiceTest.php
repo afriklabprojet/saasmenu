@@ -52,7 +52,7 @@ class ImportExportServiceTest extends TestCase
     {
         $template = $this->importExportService->getTemplate('menus');
         
-        $this->assertEquals(['name', 'description', 'price', 'cat_id'], $template['required_fields']);
+        $this->assertEquals(['name', 'description', 'price', 'category_id'], $template['required_fields']);
         $this->assertContains('name', $template['all_fields']);
         $this->assertContains('price', $template['all_fields']);
     }
