@@ -71,7 +71,7 @@ Route::group(['prefix' => 'v2', 'as' => 'v2.'], function () {
         Route::get('/track/{order_number}', [WebOrderController::class, 'track'])->name('track');
         Route::post('/cancel', [WebOrderController::class, 'cancel'])->name('cancel');
     });
-    
+
     // 📄 PAGES STATIQUES & CONTACT
     Route::name('page.')->group(function () {
         // Pages statiques (PageController)

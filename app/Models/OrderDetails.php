@@ -32,7 +32,7 @@ class OrderDetails extends Model
         'product_tax',
         'qty',
     ];
-    
+
     /**
      * Get the order that owns the detail.
      */

@@ -34,10 +34,15 @@ class OrderController extends Controller
     /**
      * Display checkout page
      */
-    public function checkout(Request $request)
+    public function checkout(Request $request, $slug = null)
     {
-        // Resolve vendor from host or session
-    $vdata = $this->getVendorId($request) ?: Session::get('restaurant_id');
+        // Resolve vendor from slug parameter, host, or session
+        $vdata = null;
+        if ($slug) {
+            $restaurant = \App\Models\Restaurant::where('restaurant_slug', $slug)->first();
+            $vdata = $restaurant ? $restaurant->user_id : null;
+        }
+        $vdata = $vdata ?: $this->getVendorId($request) ?: Session::get('restaurant_id');
 
         if (empty($vdata)) {
             return redirect('/')->with('error', 'Restaurant non sélectionné');

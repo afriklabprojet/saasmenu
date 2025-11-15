@@ -16,6 +16,7 @@ use App\Models\DeliveryArea;
 use App\Models\Coupons;
 use App\Models\Timing;
 use App\Models\Variants;
+use App\Models\Restaurant;
 use Illuminate\Support\Facades\Session;
 
 /**
@@ -27,6 +28,7 @@ class OrderFlowTest extends TestCase
     use RefreshDatabase;
 
     protected $vendor;
+    protected $restaurant;
     protected $customer;
     protected $item;
     protected $deliveryArea;
@@ -38,9 +40,15 @@ class OrderFlowTest extends TestCase
         // Créer un vendor de test
         $this->vendor = User::factory()->create([
             'type' => 2, // vendor
+            'slug' => 'test-vendor-' . uniqid(),
             'is_available' => 1,
             'is_verified' => 1,
             'login_type' => 'email',
+        ]);
+
+        // Créer le restaurant associé
+        $this->restaurant = Restaurant::factory()->create([
+            'user_id' => $this->vendor->id,
         ]);
 
         // Créer settings pour le vendor
@@ -121,7 +129,7 @@ class OrderFlowTest extends TestCase
         Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
-            ->get(route('checkout', ['slug' => $this->vendor->slug]));
+            ->get(route('v2.order.checkout'));
 
         $response->assertStatus(200);
         $response->assertViewHas('cartdata');
@@ -146,7 +154,7 @@ class OrderFlowTest extends TestCase
         Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
-            ->get(route('checkout', ['slug' => $this->vendor->slug]));
+            ->get(route('v2.order.checkout'));
 
         // Devrait rediriger avec erreur de stock
         $response->assertRedirect();
@@ -174,7 +182,7 @@ class OrderFlowTest extends TestCase
         Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
-            ->post(route('applypromocode', ['slug' => $this->vendor->slug]), [
+            ->post(route('v2.order.promo.apply'), [
                 'coupon_code' => 'TEST10',
                 'sub_total' => 50.00,
             ]);
@@ -203,7 +211,7 @@ class OrderFlowTest extends TestCase
         Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
-            ->post(route('applypromocode', ['slug' => $this->vendor->slug]), [
+            ->post(route('v2.order.promo.apply'), [
                 'coupon_code' => 'EXPIRED',
                 'sub_total' => 50.00,
             ]);
@@ -217,7 +225,7 @@ class OrderFlowTest extends TestCase
         Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
-            ->post(route('timeslot', ['slug' => $this->vendor->slug]), [
+            ->post(route('v2.order.timeslot'), [
                 'date' => now()->addDay()->format('Y-m-d'),
             ]);
 
@@ -249,7 +257,7 @@ class OrderFlowTest extends TestCase
         Session::put('delivery_area', $this->deliveryArea->id);
 
         $response = $this->actingAs($this->customer)
-            ->post(route('paymentmethod', ['slug' => $this->vendor->slug]), [
+            ->post(route('v2.order.payment'), [
                 'payment_type' => '3', // COD
                 'notes' => 'Test order',
             ]);
@@ -303,7 +311,7 @@ class OrderFlowTest extends TestCase
         Session::put('order_number', $order->order_number);
 
         $response = $this->actingAs($this->customer)
-            ->get(route('success', ['slug' => $this->vendor->slug]));
+            ->get(route('v2.order.success'));
 
         $response->assertStatus(200);
         $response->assertViewHas('orderdata');
@@ -325,7 +333,7 @@ class OrderFlowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->customer)
-            ->get(route('track', [
+            ->get(route('v2.track', [
                 'slug' => $this->vendor->slug,
                 'order_number' => $order->order_number,
             ]));
@@ -363,7 +371,7 @@ class OrderFlowTest extends TestCase
         $initialStock = $this->item->stock_qty;
 
         $response = $this->actingAs($this->customer)
-            ->post(route('cancel', ['slug' => $this->vendor->slug]), [
+            ->post(route('v2.cancel'), [
                 'order_number' => $order->order_number,
                 'cancel_reason' => 'Test cancellation',
             ]);
@@ -396,7 +404,7 @@ class OrderFlowTest extends TestCase
 
         // 2. Checkout
         $checkoutResponse = $this->actingAs($this->customer)
-            ->get(route('checkout', ['slug' => $this->vendor->slug]));
+            ->get(route('v2.order.checkout'));
         $checkoutResponse->assertStatus(200);
 
         // 3. Appliquer coupon
@@ -413,7 +421,7 @@ class OrderFlowTest extends TestCase
         ]);
 
         $couponResponse = $this->actingAs($this->customer)
-            ->post(route('applypromocode', ['slug' => $this->vendor->slug]), [
+            ->post(route('v2.order.promo.apply'), [
                 'coupon_code' => 'FLOW10',
                 'sub_total' => 50.00,
             ]);
@@ -425,7 +433,7 @@ class OrderFlowTest extends TestCase
         Session::put('delivery_area', $this->deliveryArea->id);
 
         $paymentResponse = $this->actingAs($this->customer)
-            ->post(route('paymentmethod', ['slug' => $this->vendor->slug]), [
+            ->post(route('v2.order.payment'), [
                 'payment_type' => '3',
                 'notes' => 'Complete flow test',
             ]);
@@ -445,12 +453,12 @@ class OrderFlowTest extends TestCase
         // 6. Page success
         Session::put('order_number', $order->order_number);
         $successResponse = $this->actingAs($this->customer)
-            ->get(route('success', ['slug' => $this->vendor->slug]));
+            ->get(route('v2.order.success'));
         $successResponse->assertStatus(200);
 
         // 7. Track
         $trackResponse = $this->actingAs($this->customer)
-            ->get(route('track', [
+            ->get(route('v2.track', [
                 'slug' => $this->vendor->slug,
                 'order_number' => $order->order_number,
             ]));

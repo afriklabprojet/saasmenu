@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Timing extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'timings';
-    
+
     protected $fillable = [
         'vendor_id',
         'day',
