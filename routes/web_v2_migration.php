@@ -57,6 +57,7 @@ Route::group(['prefix' => 'v2', 'as' => 'v2.'], function () {
         Route::get('/checkout', [WebOrderController::class, 'checkout'])->name('checkout');
         Route::post('/payment', [WebOrderController::class, 'paymentmethod'])->name('payment');
         Route::post('/ordercreate', [WebOrderController::class, 'ordercreate'])->name('create');
+        Route::post('/ordercreate', [WebOrderController::class, 'ordercreate'])->name('ordercreate'); // Alias
 
         // Coupons
         Route::post('/promocode/apply', [WebOrderController::class, 'applyPromocode'])->name('promo.apply');
@@ -70,7 +71,7 @@ Route::group(['prefix' => 'v2', 'as' => 'v2.'], function () {
         Route::get('/track/{order_number}', [WebOrderController::class, 'track'])->name('track');
         Route::post('/cancel', [WebOrderController::class, 'cancel'])->name('cancel');
     });
-
+    
     // 📄 PAGES STATIQUES & CONTACT
     Route::name('page.')->group(function () {
         // Pages statiques (PageController)
@@ -198,3 +199,8 @@ Route::group(['prefix' => '', 'middleware' => 'redirect.to.v2'], function () {
  * /v2/calculate-delivery          → Exposé comme API (OrderController::calculateDeliveryCharge)
  * /v2/validate-stock              → Exposé comme API (OrderController::validateCartStock)
  */
+
+// 🎯 ROUTE ALIASES FOR BACKWARD COMPATIBILITY (outside v2 prefix)
+Route::post('/v2/ordercreate', [WebOrderController::class, 'ordercreate'])->name('v2.ordercreate');
+Route::get('/v2/track/{order_number}', [WebOrderController::class, 'track'])->name('v2.track');
+Route::post('/v2/cancel', [WebOrderController::class, 'cancel'])->name('v2.cancel');

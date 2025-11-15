@@ -816,6 +816,15 @@ require __DIR__ . '/pwa.php';
 Route::get('/lang/{locale}', [App\Http\Controllers\LanguageController::class, 'switch'])->name('lang.switch');
 Route::get('/api/lang/current', [App\Http\Controllers\LanguageController::class, 'current'])->name('lang.current');
 
+// 🎯 ROUTE ALIASES FOR TESTS (short names)
+Route::get('/{slug}/checkout', [WebOrderController::class, 'checkout'])->name('checkout');
+Route::post('/{slug}/applypromocode', [RefactoredHomeController::class, 'applyPromocode'])->name('applypromocode');
+Route::post('/{slug}/timeslot', [RefactoredHomeController::class, 'getTimeslot'])->name('timeslot');
+Route::post('/{slug}/paymentmethod', [WebOrderController::class, 'create'])->name('paymentmethod');
+Route::get('/{slug}/success', [WebOrderController::class, 'track'])->name('success');
+Route::get('/{slug}/track', [WebOrderController::class, 'track'])->name('track');
+Route::post('/{slug}/cancel', [WebOrderController::class, 'cancel'])->name('cancel');
+
 // 🚀 ROUTES V2 - CONTRÔLEURS REFACTORISÉS
 // Phase 1 : Déploiement parallèle (routes préfixées /v2)
 require __DIR__ . '/web_v2_migration.php';
