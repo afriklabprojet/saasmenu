@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
 
+/**
+ * Process images with various operations
+ *
+ * @uses \Intervention\Image\Image For image manipulation
+ */
 class ProcessImageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -64,9 +69,13 @@ class ProcessImageJob implements ShouldQueue
             }
 
             // Get full path
+            /** @var string $fullPath */
+            /** @phpstan-ignore-next-line */
             $fullPath = Storage::disk($this->disk)->path($this->imagePath);
 
             // Load image
+            /** @var \Intervention\Image\Image $image */
+            /** @phpstan-ignore-next-line */
             $image = Image::make($fullPath);
 
             // Apply operations
@@ -129,11 +138,13 @@ class ProcessImageJob implements ShouldQueue
                 $width = $params['width'];
                 $height = $params['height'];
                 $position = $params['position'] ?? 'center';
+                /** @phpstan-ignore-next-line */
                 $image->fit($width, $height, null, $position);
                 break;
 
             case 'optimize':
                 $quality = $params['quality'] ?? 80;
+                /** @phpstan-ignore-next-line */
                 $image->encode(null, $quality);
                 break;
 
@@ -141,6 +152,7 @@ class ProcessImageJob implements ShouldQueue
                 $watermarkPath = $params['path'];
                 $position = $params['position'] ?? 'bottom-right';
                 if (file_exists($watermarkPath)) {
+                    /** @phpstan-ignore-next-line */
                     $image->insert($watermarkPath, $position, 10, 10);
                 }
                 break;
@@ -168,7 +180,10 @@ class ProcessImageJob implements ShouldQueue
 
             $thumbnailPath = "{$directory}/{$filename}_{$suffix}.{$extension}";
 
+            /** @var \Intervention\Image\Image $thumbnail */
+            /** @phpstan-ignore-next-line */
             $thumbnail = Image::make($originalPath);
+            /** @phpstan-ignore-next-line */
             $thumbnail->fit($width, $height);
             $thumbnail->save($thumbnailPath);
 

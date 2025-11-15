@@ -26,7 +26,7 @@ class OrderDetailsFactory extends Factory
 
         return [
             'order_id' => Order::factory(),
-            'item_id' => Item::factory(),
+            'product_id' => 1, // Use product_id instead of item_id
             'item_name' => $this->faker->words(3, true),
             'item_image' => $this->faker->imageUrl(400, 400, 'food'),
             'item_price' => $price,

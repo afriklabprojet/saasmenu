@@ -278,3 +278,63 @@ Route::middleware(['auth:sanctum'])->prefix('dashboard-widgets')->group(function
     Route::get('/export', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'exportDashboard'])->name('widgets.export');
     Route::get('/performance-history', [\App\Http\Controllers\Admin\DashboardWidgetController::class, 'getPerformanceHistory'])->name('widgets.history');
 });
+
+/*
+|--------------------------------------------------------------------------
+| RESTful Admin API Routes
+|--------------------------------------------------------------------------
+|
+| Routes API RESTful pour l'interface d'administration des restaurants.
+| Protégées par auth:sanctum pour authentification token-based.
+|
+*/
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function() {
+
+    // Categories Management API (Sprint 2 - Completed)
+    Route::apiResource('categories', \App\Http\Controllers\Admin\Api\CategoriesApiController::class);
+
+    // Items/Products Management API (Sprint 3 - Completed)
+    Route::apiResource('items', \App\Http\Controllers\Admin\Api\ItemsApiController::class);
+
+    // Extras Management API (Sprint 4 - Completed)
+    Route::apiResource('extras', \App\Http\Controllers\Admin\Api\ExtrasApiController::class);
+
+    // Variants Management API (Sprint 5 - Completed)
+    Route::apiResource('variants', \App\Http\Controllers\Admin\Api\VariantsApiController::class);
+
+    // Carts Management API (Sprint 6)
+    Route::get('carts', [\App\Http\Controllers\Admin\Api\CartsApiController::class, 'index']);
+    Route::delete('carts/{id}', [\App\Http\Controllers\Admin\Api\CartsApiController::class, 'destroy']);
+
+    // Payment Methods Management API (Sprint 7)
+    Route::get('payments', [\App\Http\Controllers\Admin\Api\PaymentsApiController::class, 'index']);
+    Route::get('payments/{id}', [\App\Http\Controllers\Admin\Api\PaymentsApiController::class, 'show']);
+    Route::put('payments/{id}', [\App\Http\Controllers\Admin\Api\PaymentsApiController::class, 'update']);
+
+    // Promocodes Management API (Sprint 8)
+    Route::apiResource('promocodes', \App\Http\Controllers\Admin\Api\PromocodesApiController::class);
+
+    // Bookings Management API (Sprint 9)
+    Route::apiResource('bookings', \App\Http\Controllers\Admin\Api\BookingsApiController::class)->only(['index', 'show', 'update', 'destroy']);
+
+    // Notifications Management API (Sprint 10)
+    Route::prefix('notifications')->group(function() {
+        Route::get('/', [\App\Http\Controllers\Admin\Api\NotificationsApiController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\Api\NotificationsApiController::class, 'store']);
+        // Routes spécifiques AVANT les routes avec paramètres {id}
+        Route::post('/mark-all-read', [\App\Http\Controllers\Admin\Api\NotificationsApiController::class, 'markAllAsRead']);
+        Route::get('/unread/count', [\App\Http\Controllers\Admin\Api\NotificationsApiController::class, 'unreadCount']);
+        // Routes avec paramètres {id} EN DERNIER
+        Route::get('/{id}', [\App\Http\Controllers\Admin\Api\NotificationsApiController::class, 'show']);
+        Route::patch('/{id}/read', [\App\Http\Controllers\Admin\Api\NotificationsApiController::class, 'markAsRead']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\Api\NotificationsApiController::class, 'destroy']);
+    });
+
+    // Orders Management API (Sprint 1 - Completed)
+    Route::prefix('orders')->group(function() {
+        Route::patch('{order}/status', [\App\Http\Controllers\Admin\Api\OrdersApiController::class, 'updateStatus']);
+        Route::patch('{order}/customer-info', [\App\Http\Controllers\Admin\Api\OrdersApiController::class, 'updateCustomerInfo']);
+        Route::patch('{order}/vendor-note', [\App\Http\Controllers\Admin\Api\OrdersApiController::class, 'updateVendorNote']);
+    });
+
+});

@@ -18,20 +18,26 @@ class ItemFactory extends Factory
      */
     public function definition(): array
     {
+        $price = $this->faker->randomFloat(2, 5, 50);
         return [
             'vendor_id' => User::factory()->create(['type' => 2]),
             'cat_id' => Category::factory(),
-            'item_name' => $this->faker->words(3, true) . ' ' . $this->faker->randomElement(['Pizza', 'Burger', 'Pasta', 'Salad', 'Sandwich']),
-            'item_price' => $this->faker->randomFloat(2, 5, 50),
-            'item_original_price' => function (array $attributes) {
-                return $attributes['item_price'] + $this->faker->randomFloat(2, 0, 10);
-            },
-            'item_description' => $this->faker->paragraph(),
-            'item_image' => $this->faker->imageUrl(400, 300, 'food'),
-            'tax' => $this->faker->randomFloat(2, 0, 5),
-            'has_variants' => $this->faker->boolean(30), // 30% chance of having variants
+            'name' => $this->faker->words(3, true) . ' ' . $this->faker->randomElement(['Pizza', 'Burger', 'Pasta', 'Salad', 'Sandwich']),
+            'price' => $price,
+            'original_price' => $price + $this->faker->randomFloat(2, 0, 10),
+            'description' => $this->faker->paragraph(),
+            'image' => $this->faker->imageUrl(400, 300, 'food'),
             'is_available' => 1,
+            'is_deleted' => 0,
             'slug' => $this->faker->slug(),
+            'stock_management' => 0,
+            'qty' => 0,
+            'min_order' => 1,
+            'max_order' => 0,
+            'low_qty' => 0,
+            'tax' => null,
+            'sku' => $this->faker->unique()->ean8(),
+            'reorder_id' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ];
@@ -63,7 +69,7 @@ class ItemFactory extends Factory
     public function expensive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'item_price' => $this->faker->randomFloat(2, 50, 200),
+            'price' => $this->faker->randomFloat(2, 50, 200),
         ]);
     }
 
@@ -73,7 +79,7 @@ class ItemFactory extends Factory
     public function cheap(): static
     {
         return $this->state(fn (array $attributes) => [
-            'item_price' => $this->faker->randomFloat(2, 1, 10),
+            'price' => $this->faker->randomFloat(2, 1, 10),
         ]);
     }
 }

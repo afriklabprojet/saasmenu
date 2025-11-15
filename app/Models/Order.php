@@ -30,6 +30,16 @@ class Order extends Model
         'rating',            // Customer can rate
         'review',            // Customer can review
         'cancellation_reason', // Why order was cancelled
+        'payment_type',      // Type de paiement (COD, Stripe, PayPal, etc.)
+        'payment_id',        // ID de transaction
+        'payment_status',    // Statut du paiement (pending, paid, failed)
+        'order_type',        // Type de commande (delivery, dine-in, takeaway)
+        'order_number',      // Numéro de commande
+        'customer_name',     // Nom du client
+        'status',            // Statut de la commande
+        'status_type',       // Type de statut
+        'sub_total',         // Sous-total
+        'grand_total',       // Total général
     ];
 
     /**

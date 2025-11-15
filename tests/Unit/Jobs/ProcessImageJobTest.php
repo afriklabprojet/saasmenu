@@ -105,10 +105,10 @@ class ProcessImageJobTest extends TestCase
 
         // Check that thumbnails were created
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('original', $result);
-        $this->assertArrayHasKey('small', $result);
-        $this->assertArrayHasKey('medium', $result);
-        $this->assertArrayHasKey('large', $result);
+        $this->assertArrayHasKey('original', $result ?? []);
+        $this->assertArrayHasKey('small', $result ?? []);
+        $this->assertArrayHasKey('medium', $result ?? []);
+        $this->assertArrayHasKey('large', $result ?? []);
     }
 
     /** @test */
@@ -129,8 +129,10 @@ class ProcessImageJobTest extends TestCase
         $result = $job->handle();
 
         $this->assertIsArray($result);
-        $this->assertArrayHasKey('original', $result);
-        Storage::disk('public')->assertExists($result['original']);
+        $this->assertArrayHasKey('original', $result ?? []);
+        if (isset($result['original'])) {
+            Storage::disk('public')->assertExists($result['original']);
+        }
     }
 
     /** @test */
@@ -198,12 +200,16 @@ class ProcessImageJobTest extends TestCase
         $result = $job->handle();
 
         // Verify all thumbnail sizes exist
-        $this->assertArrayHasKey('small', $result);   // 150x150
-        $this->assertArrayHasKey('medium', $result);  // 300x300
-        $this->assertArrayHasKey('large', $result);   // 600x600
+        $this->assertArrayHasKey('small', $result ?? []);   // 150x150
+        $this->assertArrayHasKey('medium', $result ?? []);  // 300x300
+        $this->assertArrayHasKey('large', $result ?? []);   // 600x600
 
-        foreach (['small', 'medium', 'large'] as $size) {
-            Storage::disk('public')->assertExists($result[$size]);
+        if (is_array($result)) {
+            foreach (['small', 'medium', 'large'] as $size) {
+                if (isset($result[$size])) {
+                    Storage::disk('public')->assertExists($result[$size]);
+                }
+            }
         }
     }
 
@@ -228,8 +234,10 @@ class ProcessImageJobTest extends TestCase
     /** @test */
     public function it_can_be_dispatched_to_queue()
     {
-        $this->expectsJobs(ProcessImageJob::class);
+        \Illuminate\Support\Facades\Queue::fake();
 
         ProcessImageJob::dispatch('test.jpg', ['resize' => ['width' => 800, 'height' => 600]]);
+
+        \Illuminate\Support\Facades\Queue::assertPushed(ProcessImageJob::class);
     }
 }

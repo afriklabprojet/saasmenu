@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;
 use App\Models\User;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class GenerateReportJob implements ShouldQueue
 {

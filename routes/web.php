@@ -250,12 +250,12 @@ Route::group(['prefix' => 'admin'], function () {
 
             Route::post('social_links/update', [SettingsController::class, 'social_links_update']);
             Route::get('settings/delete-sociallinks-{id}', [SettingsController::class, 'delete_sociallinks']);
-            
+
             // ✅ ROUTES RESTFUL - Orders API
             Route::patch('/orders/{order}/status', [OrdersApiController::class, 'updateStatus'])->name('admin.api.orders.update-status');
             Route::patch('/orders/{order}/customer-info', [OrdersApiController::class, 'updateCustomerInfo'])->name('admin.api.orders.update-customer-info');
             Route::patch('/orders/{order}/vendor-note', [OrdersApiController::class, 'updateVendorNote'])->name('admin.api.orders.update-vendor-note');
-            
+
             // ❌ ROUTES ANCIENNES (CRUDdy - À SUPPRIMER après migration frontend)
             // Route::post('/orders/customerinfo/', [OrderController::class, 'customerinfo']);
             // Route::post('/orders/vendor_note/', [OrderController::class, 'vendor_note']);
@@ -443,10 +443,10 @@ Route::group(['prefix' => 'admin'], function () {
                             ['prefix' => 'orders'],
                             function () {
                             Route::get('/', [OrderController::class, 'index']);
-                            
+
                             // ❌ ANCIENNE ROUTE CRUDdy (À SUPPRIMER après migration frontend)
                             // Route::get('/update-{id}-{status}-{type}', [OrderController::class, 'update']);
-                            
+
                             Route::get('/invoice/{order_number}', [OrderController::class, 'invoice']);
                             Route::get('/print/{order_number}', [OrderController::class, 'print']);
                             Route::post('/payment_status-{status}', [OrderController::class, 'payment_status']);

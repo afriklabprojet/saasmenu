@@ -16,7 +16,7 @@ class SendWhatsAppMessageJobTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Mock WhatsApp configuration
         config([
             'services.whatsapp.token' => 'test_token_123',
@@ -193,7 +193,7 @@ class SendWhatsAppMessageJobTest extends TestCase
             'template',
             $variables
         );
-        
+
         $job->handle();
 
         Http::assertSent(function ($request) {

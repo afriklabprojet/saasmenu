@@ -1,21 +1,12 @@
 <?php
 
-
-
 namespace App\Models;
 
-
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
 use Illuminate\Database\Eloquent\Model;
 
-
-
 class Variants extends Model
-
 {
-
     use HasFactory;
 
     protected $table = 'variants';
@@ -24,15 +15,30 @@ class Variants extends Model
         'item_id',
         'name',
         'price',
-        'qty',
         'original_price',
+        'qty',
         'min_order',
         'max_order',
-        'low_qty',
         'is_available',
-        'stock_management'
+        'stock_management',
+        'reorder_id',
     ];
 
+    protected $casts = [
+        'price' => 'float',
+        'original_price' => 'float',
+        'qty' => 'integer',
+        'min_order' => 'integer',
+        'max_order' => 'integer',
+        'is_available' => 'boolean',
+        'stock_management' => 'boolean',
+        'reorder_id' => 'integer',
+    ];
+
+    public function item()
+    {
+        return $this->belongsTo(Item::class, 'item_id');
+    }
 
     public static function variant_name($name = '', $counter = 0, $item_id = 0)
     {

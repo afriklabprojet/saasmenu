@@ -28,7 +28,7 @@ class StoreCustomerInfoRequest extends FormRequest
                 'string',
                 Rule::in(['customer_info', 'delivery_info']),
             ],
-            
+
             // Règles conditionnelles pour customer_info
             'customer_name' => [
                 Rule::requiredIf($this->edit_type === 'customer_info'),
@@ -48,7 +48,7 @@ class StoreCustomerInfoRequest extends FormRequest
                 'email',
                 'max:255',
             ],
-            
+
             // Règles conditionnelles pour delivery_info
             'customer_address' => [
                 Rule::requiredIf($this->edit_type === 'delivery_info'),

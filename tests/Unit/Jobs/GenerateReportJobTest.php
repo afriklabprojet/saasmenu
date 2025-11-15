@@ -94,7 +94,7 @@ class GenerateReportJobTest extends TestCase
     public function it_filters_orders_by_date_range()
     {
         $user = User::factory()->create(['type' => 2]);
-        
+
         // Orders in range
         Order::factory()->count(3)->create([
             'user_id' => $user->id,
@@ -121,7 +121,7 @@ class GenerateReportJobTest extends TestCase
     public function it_filters_orders_by_status()
     {
         $user = User::factory()->create(['type' => 2]);
-        
+
         Order::factory()->count(3)->create([
             'user_id' => $user->id,
             'status' => 'completed',
@@ -223,7 +223,7 @@ class GenerateReportJobTest extends TestCase
 
         $user = User::factory()->create(['email' => 'admin@test.com']);
         $job = new GenerateReportJob('orders', [], $user->id, 'pdf');
-        
+
         $exception = new \Exception('PDF generation failed');
         $job->failed($exception);
 
@@ -257,7 +257,7 @@ class GenerateReportJobTest extends TestCase
     public function it_calculates_correct_summary_data()
     {
         $user = User::factory()->create(['type' => 2]);
-        
+
         Order::factory()->create([
             'user_id' => $user->id,
             'total' => 100.00,

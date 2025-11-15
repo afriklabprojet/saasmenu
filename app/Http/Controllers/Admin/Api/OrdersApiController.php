@@ -16,19 +16,20 @@ use App\Helpers\helper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * OrdersApiController - RESTful API pour la gestion des commandes
- * 
+ *
  * Remplace les routes CRUDdy par des endpoints RESTful conformes
  */
 class OrdersApiController extends Controller
 {
     /**
      * Mettre à jour le statut d'une commande
-     * 
+     *
      * PATCH /admin/api/orders/{order}/status
-     * 
+     *
      * @param UpdateOrderStatusRequest $request
      * @param Order $order
      * @return \Illuminate\Http\JsonResponse
@@ -37,7 +38,7 @@ class OrdersApiController extends Controller
     {
         try {
             $vendorId = $this->getVendorId();
-            
+
             // Vérifier que la commande appartient au vendor
             if ($order->vendor_id != $vendorId) {
                 return response()->json([
@@ -74,14 +75,15 @@ class OrdersApiController extends Controller
             // Envoyer notification WhatsApp
             $this->sendWhatsAppNotification($order, $statusType, $vendorId);
 
-            // Mettre à jour le statut de paiement pour Cash on Delivery
-            if ($order->payment_type == 6 && $statusType == 3) {
-                $order->payment_status = 2;
-            }
-
             // Mettre à jour le statut de la commande
             $order->status = $customStatus->id;
             $order->status_type = $customStatus->type;
+
+            // Mettre à jour le statut de paiement pour Cash on Delivery (payment_type 6 = COD)
+            if (in_array($order->payment_type, [6, '6']) && $statusType == 3) {
+                $order->payment_status = 'paid';
+            }
+
             $order->save();
 
             // Si annulation, remettre les produits en stock
@@ -118,9 +120,9 @@ class OrdersApiController extends Controller
 
     /**
      * Mettre à jour les informations client d'une commande
-     * 
+     *
      * PATCH /admin/api/orders/{order}/customer-info
-     * 
+     *
      * @param StoreCustomerInfoRequest $request
      * @param Order $order
      * @return \Illuminate\Http\JsonResponse
@@ -142,9 +144,15 @@ class OrdersApiController extends Controller
 
             // Mettre à jour selon le type d'édition
             if ($editType === 'customer_info') {
+                // Mettre à jour les nouvelles colonnes ET les anciennes pour compatibilité
                 $order->customer_name = $request->customer_name;
+                $order->user_name = $request->customer_name;
+
                 $order->mobile = $request->customer_mobile;
+                $order->user_mobile = $request->customer_mobile;
+
                 $order->customer_email = $request->customer_email;
+                $order->user_email = $request->customer_email;
             }
 
             if ($editType === 'delivery_info') {
@@ -184,9 +192,9 @@ class OrdersApiController extends Controller
 
     /**
      * Ajouter/Mettre à jour la note vendor d'une commande
-     * 
+     *
      * PATCH /admin/api/orders/{order}/vendor-note
-     * 
+     *
      * @param StoreVendorNoteRequest $request
      * @param Order $order
      * @return \Illuminate\Http\JsonResponse
@@ -234,7 +242,7 @@ class OrdersApiController extends Controller
 
     /**
      * Obtenir l'ID du vendor courant
-     * 
+     *
      * @return int
      */
     protected function getVendorId(): int
@@ -242,13 +250,13 @@ class OrdersApiController extends Controller
         if (Auth::user()->type == 4) {
             return Auth::user()->vendor_id;
         }
-        
+
         return Auth::user()->id;
     }
 
     /**
      * Préparer les données de notification selon le type de statut
-     * 
+     *
      * @param Order $order
      * @param int $statusType
      * @return array
@@ -263,19 +271,19 @@ class OrdersApiController extends Controller
                     'title' => $title,
                     'message' => "Your Order {$order->order_number} has been accepted by Admin"
                 ];
-            
+
             case 3: // Delivered
                 return [
                     'title' => $title,
                     'message' => "Your Order {$order->order_number} has been successfully delivered."
                 ];
-            
+
             case 4: // Cancelled
                 return [
                     'title' => $title,
                     'message' => "Order {$order->order_number} has been cancelled by Admin."
                 ];
-            
+
             default:
                 return [
                     'title' => $title,
@@ -286,7 +294,7 @@ class OrdersApiController extends Controller
 
     /**
      * Envoyer email de notification de statut
-     * 
+     *
      * @param Order $order
      * @param array $data
      * @return void
@@ -296,7 +304,7 @@ class OrdersApiController extends Controller
         try {
             $emailData = helper::emailconfigration($order->vendor_id);
             Config::set('mail', $emailData);
-            
+
             helper::order_status_email(
                 $order->customer_email,
                 $order->customer_name,
@@ -314,7 +322,7 @@ class OrdersApiController extends Controller
 
     /**
      * Envoyer notification WhatsApp
-     * 
+     *
      * @param Order $order
      * @param int $statusType
      * @param int $vendorId
@@ -325,7 +333,7 @@ class OrdersApiController extends Controller
         try {
             // TODO: Implémenter l'envoi WhatsApp via WhatsAppBusinessService
             // Cette logique sera ajoutée avec le service WhatsApp
-            
+
             Log::info('WhatsApp notification queued', [
                 'order_id' => $order->id,
                 'status_type' => $statusType
@@ -340,7 +348,7 @@ class OrdersApiController extends Controller
 
     /**
      * Restaurer le stock après annulation de commande
-     * 
+     *
      * @param Order $order
      * @return void
      */
@@ -349,26 +357,23 @@ class OrdersApiController extends Controller
         $orderDetails = OrderDetails::where('order_id', $order->id)->get();
 
         foreach ($orderDetails as $detail) {
-            if ($detail->variants_id != null && $detail->variants_id != "") {
-                $item = Variants::where('id', $detail->variants_id)
-                    ->where('item_id', $detail->item_id)
-                    ->first();
-            } else {
-                $item = Item::where('id', $detail->item_id)
-                    ->where('vendor_id', $order->vendor_id)
-                    ->first();
+            // Only restore stock if variation has qty management
+            if ($detail->variation_id != null && $detail->variation_id != "") {
+                $variant = Variants::find($detail->variation_id);
+                if ($variant && Schema::hasColumn('variants', 'qty')) {
+                    $variant->qty = $variant->qty + $detail->qty;
+                    $variant->save();
+
+                    Log::info('Variant stock restored', [
+                        'order_id' => $order->id,
+                        'variant_id' => $variant->id,
+                        'quantity' => $detail->qty
+                    ]);
+                }
             }
 
-            if ($item) {
-                $item->qty = $item->qty + $detail->qty;
-                $item->save();
-
-                Log::info('Stock restored', [
-                    'order_id' => $order->id,
-                    'item_id' => $item->id,
-                    'quantity' => $detail->qty
-                ]);
-            }
+            // Note: Items table doesn't have qty column for stock management
+            // Stock restoration is only supported for variants
         }
     }
 }

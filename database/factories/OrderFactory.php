@@ -27,18 +27,18 @@ class OrderFactory extends Factory
             'order_number' => 'ORD-' . $this->faker->unique()->randomNumber(8),
             'user_id' => User::factory()->create(['type' => 3]), // Customer
             'vendor_id' => User::factory()->create(['type' => 2]), // Vendor
-            
+
             // Customer info (nouvelles colonnes)
             'customer_name' => $this->faker->name(),
             'customer_email' => $this->faker->email(),
             'mobile' => $this->faker->phoneNumber(), // Nom correct de la colonne
             'address' => $this->faker->address(),
-            
+
             // Anciennes colonnes user_* pour compatibilité
             'user_name' => $this->faker->name(),
             'user_email' => $this->faker->email(),
             'user_mobile' => $this->faker->phoneNumber(),
-            
+
             'sub_total' => $subtotal,
             'tax' => $tax,
             'tax_amount' => $tax,
