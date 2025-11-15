@@ -145,11 +145,11 @@ class OrderWorkflowTest extends TestCase
         ]);
 
         $response->assertStatus(302);
-        
+
         $order = Order::where('user_id', $this->customer->id)->first();
         $this->assertNotNull($order);
-        $this->assertEquals(50.00, $order->order_total); // 2 x $25
-        
+        $this->assertEquals(50.00, $order->grand_total); // 2 x $25
+
         // Cart should be cleared
         $this->assertDatabaseMissing('carts', [
             'user_id' => $this->customer->id,
@@ -429,11 +429,11 @@ class OrderWorkflowTest extends TestCase
         ]);
 
         $order = Order::where('user_id', $this->customer->id)->first();
-        
+
         $this->assertEquals(50.00, $order->sub_total);
         $this->assertEquals(5.00, $order->delivery_charge);
         $this->assertEquals(4.50, $order->tax);
-        $this->assertEquals(59.50, $order->order_total);
+        $this->assertEquals(59.50, $order->grand_total);
     }
 
     /** @test */
@@ -469,10 +469,10 @@ class OrderWorkflowTest extends TestCase
         ]);
 
         $order = Order::where('user_id', $this->customer->id)->first();
-        
+
         $this->assertEquals(50.00, $order->sub_total);
         $this->assertEquals(10.00, $order->discount_amount);
-        $this->assertEquals(40.00, $order->order_total);
+        $this->assertEquals(40.00, $order->grand_total);
     }
 
     /** @test */

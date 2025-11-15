@@ -28,32 +28,40 @@ class OrderFactory extends Factory
             'user_id' => User::factory()->create(['type' => 3]), // Customer
             'vendor_id' => User::factory()->create(['type' => 2]), // Vendor
 
-            // Customer info (nouvelles colonnes)
-            'customer_name' => $this->faker->name(),
-            'customer_email' => $this->faker->email(),
-            'mobile' => $this->faker->phoneNumber(), // Nom correct de la colonne
-            'address' => $this->faker->address(),
-
-            // Anciennes colonnes user_* pour compatibilité
+            // User info (colonnes existantes dans la migration)
             'user_name' => $this->faker->name(),
             'user_email' => $this->faker->email(),
             'user_mobile' => $this->faker->phoneNumber(),
 
+            // Billing address
+            'billing_address' => $this->faker->streetAddress(),
+            'billing_landmark' => $this->faker->secondaryAddress(),
+            'billing_postal_code' => $this->faker->postcode(),
+            'billing_city' => $this->faker->city(),
+            'billing_state' => $this->faker->state(),
+            'billing_country' => $this->faker->country(),
+
+            // Shipping address
+            'shipping_address' => $this->faker->streetAddress(),
+            'shipping_landmark' => $this->faker->secondaryAddress(),
+            'shipping_postal_code' => $this->faker->postcode(),
+            'shipping_city' => $this->faker->city(),
+            'shipping_state' => $this->faker->state(),
+            'shipping_country' => $this->faker->country(),
+
             'sub_total' => $subtotal,
-            'tax' => $tax,
-            'tax_amount' => $tax,
-            'delivery_charge' => $deliveryCharge,
+            'offer_code' => $this->faker->optional()->word(),
             'offer_amount' => $discount,
+            'tax_amount' => $tax,
+            'shipping_area' => $this->faker->city(),
+            'delivery_charge' => $deliveryCharge,
             'grand_total' => $grandTotal,
-            'status' => $this->faker->numberBetween(1, 6), // 1=Pending, 2=Confirmed, etc.
-            'status_type' => $this->faker->numberBetween(1, 4), // 1=Pending, 2=Accepted, 3=Delivered, 4=Cancelled
-            'order_type' => $this->faker->numberBetween(1, 3), // 1=Delivery, 2=Pickup, 3=Dine-in
-            'payment_status' => $this->faker->numberBetween(1, 3), // 1=Pending, 2=Paid, 3=Failed
-            'payment_type' => $this->faker->numberBetween(1, 6), // 1=COD, 2-6=Online
-            'payment_method' => $this->faker->randomElement(['cash', 'card', 'paypal', 'stripe']),
-            'order_date' => $this->faker->dateTimeBetween('-30 days', 'now'),
-            'delivery_date' => $this->faker->dateTimeBetween('now', '+7 days'),
-            'delivery_time' => $this->faker->time(),
+
+            'transaction_id' => $this->faker->optional()->uuid(),
+            'transaction_type' => $this->faker->numberBetween(1, 6), // 1=COD, 2-6=Online
+
+            'status' => $this->faker->numberBetween(1, 5), // 1=Placed, 2=Confirmed, 3=Cancelled by admin, 4=Cancelled by user, 5=Delivered
+
             'notes' => $this->faker->optional()->sentence(),
             'created_at' => now(),
             'updated_at' => now(),

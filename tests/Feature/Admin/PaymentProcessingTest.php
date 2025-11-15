@@ -39,9 +39,9 @@ class PaymentProcessingTest extends TestCase
         $this->order = Order::factory()->create([
             'vendor_id' => $this->vendor->id,
             'user_id' => $this->customer->id,
-            'order_total' => 50.00,
+            'grand_total' => 50.00,
             'status' => 1, // Pending
-            'payment_type' => null,
+            'transaction_type' => 1, // Default payment type
         ]);
 
         // Create payment methods
@@ -81,9 +81,9 @@ class PaymentProcessingTest extends TestCase
         ]);
 
         $response->assertStatus(302);
-        
+
         $this->order->refresh();
-        $this->assertEquals('1', $this->order->payment_type);
+        $this->assertEquals(1, $this->order->transaction_type);
         $this->assertEquals(1, $this->order->status); // Still pending
     }
 
@@ -131,9 +131,9 @@ class PaymentProcessingTest extends TestCase
         ]);
 
         $response->assertStatus(302);
-        
+
         $this->order->refresh();
-        $this->assertEquals('2', $this->order->payment_type);
+        $this->assertEquals('2', $this->order->transaction_type);
         $this->assertEquals(2, $this->order->status); // Confirmed
     }
 
@@ -196,9 +196,9 @@ class PaymentProcessingTest extends TestCase
         ]);
 
         $response->assertStatus(302);
-        
+
         $this->order->refresh();
-        $this->assertEquals('3', $this->order->payment_type);
+        $this->assertEquals('3', $this->order->transaction_type);
         $this->assertEquals(2, $this->order->status);
     }
 
@@ -222,7 +222,7 @@ class PaymentProcessingTest extends TestCase
 
         $response->assertStatus(302);
         $response->assertSessionHas('error');
-        
+
         $this->order->refresh();
         $this->assertEquals(1, $this->order->status); // Still pending
     }
@@ -289,7 +289,7 @@ class PaymentProcessingTest extends TestCase
             'payment_type' => '2',
             'status' => 2,
             'payment_id' => 'pi_test_123456',
-            'order_total' => 100.00,
+            'grand_total' => 100.00,
         ]);
 
         Http::fake([
@@ -328,7 +328,7 @@ class PaymentProcessingTest extends TestCase
     public function test_validates_payment_method_availability()
     {
         Payment::where('vendor_id', $this->vendor->id)
-            ->where('payment_type', '2')
+            ->where('transaction_type', '2')
             ->update(['is_available' => 0]);
 
         $this->actingAs($this->customer);
@@ -362,7 +362,7 @@ class PaymentProcessingTest extends TestCase
         $response = $this->post(route('webhook.stripe'), $payload);
 
         $response->assertStatus(200);
-        
+
         $this->order->refresh();
         $this->assertEquals(2, $this->order->status);
     }
@@ -385,7 +385,7 @@ class PaymentProcessingTest extends TestCase
         $response = $this->post(route('webhook.stripe'), $payload);
 
         $response->assertStatus(200);
-        
+
         $this->order->refresh();
         $this->assertEquals(5, $this->order->status); // Cancelled
     }
@@ -408,7 +408,7 @@ class PaymentProcessingTest extends TestCase
         $response = $this->post(route('webhook.paypal'), $payload);
 
         $response->assertStatus(200);
-        
+
         $this->order->refresh();
         $this->assertEquals(2, $this->order->status);
     }
@@ -474,7 +474,7 @@ class PaymentProcessingTest extends TestCase
     public function test_only_returns_available_payment_methods()
     {
         Payment::where('vendor_id', $this->vendor->id)
-            ->where('payment_type', '2')
+            ->where('transaction_type', '2')
             ->update(['is_available' => 0]);
 
         $this->actingAs($this->customer);
