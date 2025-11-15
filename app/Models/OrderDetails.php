@@ -17,19 +17,35 @@ class OrderDetails extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'vendor_id',
+        'user_id',
+        'session_id',
         'order_id',
         'product_id',
-        'item_name',
-        'item_price',
-        'item_image',
+        'product_name',
+        'product_slug',
+        'product_image',
+        'attribute',
+        'variation_id',
+        'variation_name',
+        'product_price',
+        'product_tax',
         'qty',
-        'price',
-        'tax',
-        'variants_id',
-        'variants_name',
-        'variants_price',
-        'extras_id',
-        'extras_name',
-        'extras_price',
     ];
+    
+    /**
+     * Get the order that owns the detail.
+     */
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    /**
+     * Get the product.
+     */
+    public function product()
+    {
+        return $this->belongsTo(Item::class, 'product_id');
+    }
 }

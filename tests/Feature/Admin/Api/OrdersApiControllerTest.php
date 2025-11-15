@@ -167,7 +167,7 @@ class OrdersApiControllerTest extends TestCase
             'vendor_id' => $this->vendor->id,
             'name' => 'Test Product',
             'cat_id' => 1,
-            'price' => 10.00,
+            'product_price' => 10.00,
             'is_available' => 1,
         ]);
 
