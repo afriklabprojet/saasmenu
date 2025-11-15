@@ -27,12 +27,15 @@ class Order extends Model
         'delivery_type',     // delivery/pickup
         'delivery_address',  // Customer provided
         'special_instructions', // Customer notes
+        'notes',             // Order notes
         'rating',            // Customer can rate
         'review',            // Customer can review
         'cancellation_reason', // Why order was cancelled
         'payment_type',      // Type de paiement (COD, Stripe, PayPal, etc.)
         'payment_id',        // ID de transaction
         'payment_status',    // Statut du paiement (pending, paid, failed)
+        'transaction_type',  // Transaction type (COD=1, Stripe=2, PayPal=3)
+        'transaction_id',    // Transaction ID
         'order_type',        // Type de commande (delivery, dine-in, takeaway)
         'order_number',      // Numéro de commande
         'customer_name',     // Nom du client
