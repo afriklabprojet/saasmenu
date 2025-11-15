@@ -55,9 +55,9 @@ class OrderProcessingTest extends TestCase
 
         $this->item = Item::factory()->create([
             'vendor_id' => $this->restaurant->user_id,
-            'category_id' => $this->category->id,
-            'item_name' => 'Test Item',
-            'item_price' => 25.99,
+            'cat_id' => $this->category->id,
+            'name' => 'Test Item',
+            'price' => 25.99,
             'is_available' => 1,
             'tax' => 10.00
         ]);

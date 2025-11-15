@@ -79,7 +79,7 @@ class PaymentProcessingTest extends TestCase
     public function test_can_update_order_payment_to_cod()
     {
         $this->order->update(['transaction_type' => 1]);
-        
+
         $this->order->refresh();
         $this->assertEquals(1, $this->order->transaction_type);
         $this->assertDatabaseHas('orders', [
@@ -155,7 +155,7 @@ class PaymentProcessingTest extends TestCase
     public function test_order_status_can_be_confirmed()
     {
         $this->order->update(['status' => 2]);
-        
+
         $this->order->refresh();
         $this->assertEquals(2, $this->order->status);
     }
@@ -164,7 +164,7 @@ class PaymentProcessingTest extends TestCase
     public function test_order_status_can_be_cancelled()
     {
         $this->order->update(['status' => 3]);
-        
+
         $this->order->refresh();
         $this->assertEquals(3, $this->order->status);
     }
@@ -173,7 +173,7 @@ class PaymentProcessingTest extends TestCase
     public function test_order_status_can_be_delivered()
     {
         $this->order->update(['status' => 5]);
-        
+
         $this->order->refresh();
         $this->assertEquals(5, $this->order->status);
     }
@@ -217,7 +217,7 @@ class PaymentProcessingTest extends TestCase
     public function test_can_update_order_transaction_id()
     {
         $this->order->update(['transaction_id' => 'TXN_12345']);
-        
+
         $this->order->refresh();
         $this->assertEquals('TXN_12345', $this->order->transaction_id);
     }

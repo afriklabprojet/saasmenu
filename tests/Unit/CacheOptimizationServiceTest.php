@@ -40,8 +40,8 @@ class CacheOptimizationServiceTest extends TestCase
 
         $this->item = Item::factory()->create([
             'vendor_id' => $this->restaurant->user_id,
-            'category_id' => $this->category->id,
-            'item_name' => 'Test Item',
+            'cat_id' => $this->category->id,
+            'name' => 'Test Item',
             'is_available' => 1
         ]);
     }
@@ -89,7 +89,7 @@ class CacheOptimizationServiceTest extends TestCase
         $cachedItems = Cache::get($cacheKey);
         $this->assertIsArray($cachedItems);
         $this->assertCount(1, $cachedItems);
-        $this->assertEquals('Test Item', $cachedItems[0]['item_name']);
+        $this->assertEquals('Test Item', $cachedItems[0]['name']);
     }
 
     /**

@@ -30,8 +30,8 @@ class AnalyticsDashboardTest extends TestCase
         ]);
 
         DB::table('products')->insert([
-            ['id' => 1, 'vendor_id' => 1, 'category_id' => 1, 'name' => 'Pizza', 'slug' => 'pizza', 'price' => 10.0, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 2, 'vendor_id' => 1, 'category_id' => 1, 'name' => 'Pasta', 'slug' => 'pasta', 'price' => 8.5, 'created_at' => now(), 'updated_at' => now()]
+            ['id' => 1, 'vendor_id' => 1, 'cat_id' => 1, 'name' => 'Pizza', 'slug' => 'pizza', 'price' => 10.0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'vendor_id' => 1, 'cat_id' => 1, 'name' => 'Pasta', 'slug' => 'pasta', 'price' => 8.5, 'created_at' => now(), 'updated_at' => now()]
         ]);
 
         // Create some orders for today

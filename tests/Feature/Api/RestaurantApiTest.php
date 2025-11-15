@@ -79,8 +79,8 @@ class RestaurantApiTest extends TestCase
                 'data' => [
                     '*' => [
                         'id',
-                        'item_name',
-                        'item_price',
+                        'name',
+                        'price',
                         'category'
                     ]
                 ]

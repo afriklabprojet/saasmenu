@@ -87,7 +87,7 @@ class RefactoredControllersTest extends TestCase
         // Create a test product
         $item = Item::factory()->create([
             'vendor_id' => $this->vendor->id,
-            'item_name' => 'Test Product'
+            'name' => 'Test Product'
         ]);
 
         $response = $this->get("/test-vendor/product/{$item->id}");

@@ -25,7 +25,7 @@ class OrderManagementTest extends TestCase
         $item = Item::factory()->create([
             'vendor_id' => $vendor->id,
             'cat_id' => $category->id,
-            'item_price' => 15.99
+            'price' => 15.99
         ]);
 
         $orderData = [
@@ -195,7 +195,7 @@ class OrderManagementTest extends TestCase
             'sub_total' => $subtotal,
             'delivery_charge' => $deliveryCharge,
             'tax' => $tax,
-            'discount_amount' => $discount,
+            'offer_amount' => $discount,
             'grand_total' => $expectedTotal
         ]);
 
@@ -213,13 +213,13 @@ class OrderManagementTest extends TestCase
         $item1 = Item::factory()->create([
             'vendor_id' => $vendor->id,
             'cat_id' => $category->id,
-            'item_price' => 10.00
+            'price' => 10.00
         ]);
 
         $item2 = Item::factory()->create([
             'vendor_id' => $vendor->id,
             'cat_id' => $category->id,
-            'item_price' => 15.00
+            'price' => 15.00
         ]);
 
         $order = Order::factory()->create([

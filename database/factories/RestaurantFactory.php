@@ -18,22 +18,25 @@ class RestaurantFactory extends Factory
     public function definition(): array
     {
         return [
-            'vendor_id' => User::factory(),
-            'name' => $this->faker->company() . ' Restaurant',
-            'slug' => $this->faker->slug(),
-            'email' => $this->faker->companyEmail(),
-            'mobile' => $this->faker->phoneNumber(),
-            'address' => $this->faker->streetAddress(),
-            'city' => $this->faker->city(),
-            'state' => $this->faker->state(),
-            'postal_code' => $this->faker->postcode(),
-            'country' => $this->faker->country(),
+            'user_id' => User::factory()->create(['type' => 2]), // Vendor user
+            'restaurant_name' => $this->faker->company() . ' Restaurant',
+            'restaurant_slug' => $this->faker->unique()->slug(),
+            'restaurant_address' => $this->faker->streetAddress(),
+            'restaurant_phone' => $this->faker->phoneNumber(),
+            'restaurant_email' => $this->faker->companyEmail(),
+            'restaurant_image' => $this->faker->imageUrl(400, 300, 'food'),
+            'description' => $this->faker->paragraph(),
             'latitude' => $this->faker->latitude(),
             'longitude' => $this->faker->longitude(),
-            'description' => $this->faker->paragraph(),
-            'timezone' => 'UTC',
-            'currency' => 'USD',
-            'is_available' => 1,
+            'is_active' => 1,
+            'delivery_fee' => $this->faker->randomFloat(2, 0, 10),
+            'minimum_order' => $this->faker->randomFloat(2, 0, 20),
+            'delivery_time' => $this->faker->numberBetween(15, 60),
+            'opening_time' => '09:00',
+            'closing_time' => '22:00',
+            'is_open' => 1,
+            'rating' => $this->faker->randomFloat(1, 0, 5),
+            'total_reviews' => $this->faker->numberBetween(0, 100),
             'created_at' => now(),
             'updated_at' => now(),
         ];
@@ -45,17 +48,17 @@ class RestaurantFactory extends Factory
     public function disabled(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_available' => 0,
+            'is_active' => 0,
         ]);
     }
 
     /**
-     * Indicate that the restaurant is in a specific city.
+     * Indicate that the restaurant is closed.
      */
-    public function inCity(string $city): static
+    public function closed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'city' => $city,
+            'is_open' => 0,
         ]);
     }
 }

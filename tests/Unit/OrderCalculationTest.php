@@ -66,8 +66,8 @@ class OrderCalculationTest extends TestCase
         $item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Test Item',
-            'item_price' => 100.00,
+            'name' => 'Test Item',
+            'price' => 100.00,
             'tax' => json_encode([
                 ['name' => 'VAT', 'type' => '2', 'tax' => '10'], // 10% sur 100 = 10
                 ['name' => 'Service', 'type' => '2', 'tax' => '5'], // 5% sur 100 = 5
@@ -122,8 +122,8 @@ class OrderCalculationTest extends TestCase
         $item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Test Item',
-            'item_price' => 50.00,
+            'name' => 'Test Item',
+            'price' => 50.00,
             'tax' => json_encode([
                 ['name' => 'Fixed Fee', 'type' => '1', 'tax' => '5'], // Montant fixe de 5
             ]),
@@ -166,8 +166,8 @@ class OrderCalculationTest extends TestCase
         $item1 = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Item 1',
-            'item_price' => 100.00,
+            'name' => 'Item 1',
+            'price' => 100.00,
             'tax' => json_encode([
                 ['name' => 'VAT', 'type' => '2', 'tax' => '10'],
             ]),
@@ -178,8 +178,8 @@ class OrderCalculationTest extends TestCase
         $item2 = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Item 2',
-            'item_price' => 50.00,
+            'name' => 'Item 2',
+            'price' => 50.00,
             'tax' => json_encode([
                 ['name' => 'VAT', 'type' => '2', 'tax' => '10'],
             ]),
@@ -298,8 +298,8 @@ class OrderCalculationTest extends TestCase
         $item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Test Item',
-            'item_price' => 25.00,
+            'name' => 'Test Item',
+            'price' => 25.00,
             'min_order' => 1,
             'max_order' => 10,
             'stock_qty' => 100,
@@ -312,7 +312,7 @@ class OrderCalculationTest extends TestCase
                 'item_id' => $item->id,
                 'variant_id' => null,
                 'qty' => 5,
-                'item_name' => 'Test Item',
+                'name' => 'Test Item',
             ]
         ]);
 
@@ -337,8 +337,8 @@ class OrderCalculationTest extends TestCase
         $item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Low Stock Item',
-            'item_price' => 25.00,
+            'name' => 'Low Stock Item',
+            'price' => 25.00,
             'stock_qty' => 2, // Stock faible
             'is_available' => 1,
             'is_deleted' => 2,
@@ -349,7 +349,7 @@ class OrderCalculationTest extends TestCase
                 'item_id' => $item->id,
                 'variant_id' => null,
                 'qty' => 5, // Plus que le stock
-                'item_name' => 'Low Stock Item',
+                'name' => 'Low Stock Item',
             ]
         ]);
 
@@ -374,8 +374,8 @@ class OrderCalculationTest extends TestCase
         $item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Min Order Item',
-            'item_price' => 25.00,
+            'name' => 'Min Order Item',
+            'price' => 25.00,
             'min_order' => 5, // Minimum 5
             'stock_qty' => 100,
             'is_available' => 1,
@@ -387,7 +387,7 @@ class OrderCalculationTest extends TestCase
                 'item_id' => $item->id,
                 'variant_id' => null,
                 'qty' => 2, // Moins que le minimum
-                'item_name' => 'Min Order Item',
+                'name' => 'Min Order Item',
             ]
         ]);
 
@@ -412,8 +412,8 @@ class OrderCalculationTest extends TestCase
         $item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Variant Item',
-            'item_price' => 25.00,
+            'name' => 'Variant Item',
+            'price' => 25.00,
             'stock_qty' => 100,
             'has_variants' => 1,
             'is_available' => 1,
@@ -436,7 +436,7 @@ class OrderCalculationTest extends TestCase
                 'item_id' => $item->id,
                 'variant_id' => $variant->id,
                 'qty' => 3,
-                'item_name' => 'Variant Item',
+                'name' => 'Variant Item',
             ]
         ]);
 
@@ -461,8 +461,8 @@ class OrderCalculationTest extends TestCase
         $item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Variant Item',
-            'item_price' => 25.00,
+            'name' => 'Variant Item',
+            'price' => 25.00,
             'has_variants' => 1,
             'is_available' => 1,
             'is_deleted' => 2,
@@ -484,7 +484,7 @@ class OrderCalculationTest extends TestCase
                 'item_id' => $item->id,
                 'variant_id' => $variant->id,
                 'qty' => 10, // Plus que le maximum
-                'item_name' => 'Variant Item',
+                'name' => 'Variant Item',
             ]
         ]);
 

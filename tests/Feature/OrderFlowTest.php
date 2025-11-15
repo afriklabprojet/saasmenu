@@ -73,8 +73,8 @@ class OrderFlowTest extends TestCase
         $this->item = Item::create([
             'vendor_id' => $this->vendor->id,
             'cat_id' => $category->id,
-            'item_name' => 'Test Item',
-            'item_price' => 25.00,
+            'name' => 'Test Item',
+            'price' => 25.00,
             'tax' => json_encode([['name' => 'VAT', 'type' => '2', 'tax' => '10']]),
             'min_order' => 1,
             'max_order' => 10,
@@ -113,7 +113,7 @@ class OrderFlowTest extends TestCase
             'user_id' => $this->customer->id,
             'item_id' => $this->item->id,
             'qty' => 2,
-            'price' => $this->item->item_price,
+            'price' => $this->item->price,
             'tax' => $this->item->tax,
         ]);
 
@@ -139,7 +139,7 @@ class OrderFlowTest extends TestCase
             'user_id' => $this->customer->id,
             'item_id' => $this->item->id,
             'qty' => 5, // Plus que le stock disponible
-            'price' => $this->item->item_price,
+            'price' => $this->item->price,
             'tax' => $this->item->tax,
         ]);
 
@@ -239,7 +239,7 @@ class OrderFlowTest extends TestCase
             'user_id' => $this->customer->id,
             'item_id' => $this->item->id,
             'qty' => 2,
-            'price' => $this->item->item_price,
+            'price' => $this->item->price,
             'tax' => $this->item->tax,
         ]);
 
@@ -285,11 +285,11 @@ class OrderFlowTest extends TestCase
         OrderDetails::create([
             'order_id' => $order->id,
             'item_id' => $this->item->id,
-            'item_name' => $this->item->item_name,
-            'item_price' => $this->item->item_price,
+            'name' => $this->item->name,
+            'price' => $this->item->price,
             'qty' => 2,
             'tax' => $this->item->tax,
-            'price' => $this->item->item_price * 2,
+            'price' => $this->item->price * 2,
         ]);
 
         Payment::create([
@@ -352,11 +352,11 @@ class OrderFlowTest extends TestCase
         OrderDetails::create([
             'order_id' => $order->id,
             'item_id' => $this->item->id,
-            'item_name' => $this->item->item_name,
-            'item_price' => $this->item->item_price,
+            'name' => $this->item->name,
+            'price' => $this->item->price,
             'qty' => 2,
             'tax' => $this->item->tax,
-            'price' => $this->item->item_price * 2,
+            'price' => $this->item->price * 2,
         ]);
 
         // Stock initial
@@ -388,7 +388,7 @@ class OrderFlowTest extends TestCase
             'user_id' => $this->customer->id,
             'item_id' => $this->item->id,
             'qty' => 2,
-            'price' => $this->item->item_price,
+            'price' => $this->item->price,
             'tax' => $this->item->tax,
         ]);
 

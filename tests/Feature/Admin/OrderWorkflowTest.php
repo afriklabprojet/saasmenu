@@ -53,7 +53,7 @@ class OrderWorkflowTest extends TestCase
     public function test_order_can_transition_to_confirmed()
     {
         $this->order->update(['status' => 2]);
-        
+
         $this->order->refresh();
         $this->assertEquals(2, $this->order->status);
     }
@@ -62,7 +62,7 @@ class OrderWorkflowTest extends TestCase
     public function test_order_can_transition_to_cancelled()
     {
         $this->order->update(['status' => 3]);
-        
+
         $this->order->refresh();
         $this->assertEquals(3, $this->order->status);
     }
@@ -72,7 +72,7 @@ class OrderWorkflowTest extends TestCase
     {
         $this->order->update(['status' => 2]);
         $this->order->update(['status' => 4]);
-        
+
         $this->order->refresh();
         $this->assertEquals(4, $this->order->status);
     }
@@ -81,7 +81,7 @@ class OrderWorkflowTest extends TestCase
     public function test_order_can_transition_to_ready()
     {
         $this->order->update(['status' => 5]);
-        
+
         $this->order->refresh();
         $this->assertEquals(5, $this->order->status);
     }
@@ -90,7 +90,7 @@ class OrderWorkflowTest extends TestCase
     public function test_order_can_transition_to_on_delivery()
     {
         $this->order->update(['status' => 6]);
-        
+
         $this->order->refresh();
         $this->assertEquals(6, $this->order->status);
     }
@@ -99,7 +99,7 @@ class OrderWorkflowTest extends TestCase
     public function test_order_can_transition_to_delivered()
     {
         $this->order->update(['status' => 7]);
-        
+
         $this->order->refresh();
         $this->assertEquals(7, $this->order->status);
     }
@@ -222,7 +222,7 @@ class OrderWorkflowTest extends TestCase
     public function test_can_update_order_notes()
     {
         $this->order->update(['notes' => 'Special instructions']);
-        
+
         $this->order->refresh();
         $this->assertEquals('Special instructions', $this->order->notes);
     }
@@ -247,7 +247,7 @@ class OrderWorkflowTest extends TestCase
     public function test_order_transaction_type_can_be_set()
     {
         $this->order->update(['transaction_type' => 2]);
-        
+
         $this->order->refresh();
         $this->assertEquals(2, $this->order->transaction_type);
     }
@@ -256,7 +256,7 @@ class OrderWorkflowTest extends TestCase
     public function test_order_transaction_id_can_be_set()
     {
         $this->order->update(['transaction_id' => 'TXN123456']);
-        
+
         $this->order->refresh();
         $this->assertEquals('TXN123456', $this->order->transaction_id);
     }
