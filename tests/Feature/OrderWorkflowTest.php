@@ -116,7 +116,7 @@ class OrderWorkflowTest extends TestCase
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
             'payment_type' => 'COD',
-            'order_status' => 1, // Pending
+            'status' => 1, // Pending
         ]);
 
         // Vérifier les items de commande
@@ -222,7 +222,7 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 1, // Pending
+            'status' => 1, // Pending
         ]);
 
         $response = $this->post(route('admin.order.updatestatus'), [
@@ -244,27 +244,27 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 1, // Pending
+            'status' => 1, // Pending
         ]);
 
         // Pending (1) → Confirmed (2)
-        $order->update(['order_status' => 2]);
+        $order->update(['status' => 2]);
         $this->assertEquals(2, $order->order_status);
 
         // Confirmed (2) → Preparing (3)
-        $order->update(['order_status' => 3]);
+        $order->update(['status' => 3]);
         $this->assertEquals(3, $order->order_status);
 
         // Preparing (3) → Ready (4)
-        $order->update(['order_status' => 4]);
+        $order->update(['status' => 4]);
         $this->assertEquals(4, $order->order_status);
 
         // Ready (4) → Out for Delivery (5)
-        $order->update(['order_status' => 5]);
+        $order->update(['status' => 5]);
         $this->assertEquals(5, $order->order_status);
 
         // Out for Delivery (5) → Delivered (6)
-        $order->update(['order_status' => 6]);
+        $order->update(['status' => 6]);
         $this->assertEquals(6, $order->order_status);
     }
 
@@ -278,7 +278,7 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 1,
+            'status' => 1,
         ]);
 
         $this->post(route('admin.order.updatestatus'), [
@@ -299,14 +299,14 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 1,
+            'status' => 1,
         ]);
 
         $initialUpdatedAt = $order->updated_at;
 
         sleep(1);
 
-        $order->update(['order_status' => 2]);
+        $order->update(['status' => 2]);
         $order->refresh();
 
         $this->assertNotEquals($initialUpdatedAt, $order->updated_at);
@@ -326,7 +326,7 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 1, // Pending
+            'status' => 1, // Pending
         ]);
 
         $response = $this->post(route('v2.cancel'), [
@@ -349,7 +349,7 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 6, // Delivered
+            'status' => 6, // Delivered
         ]);
 
         $response = $this->post(route('v2.cancel'), [
@@ -371,7 +371,7 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 1,
+            'status' => 1,
         ]);
 
         $response = $this->post(route('v2.cancel'), [
@@ -391,7 +391,7 @@ class OrderWorkflowTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
-            'order_status' => 1,
+            'status' => 1,
         ]);
 
         OrderItem::create([
@@ -431,7 +431,7 @@ class OrderWorkflowTest extends TestCase
             'user_id' => $this->customer->id,
             'vendor_id' => $this->vendorUser->id,
             'order_number' => 'ORDER123456',
-            'order_status' => 3, // Preparing
+            'status' => 3, // Preparing
         ]);
 
         $response = $this->get(route('v2.track', ['order_number' => 'ORDER123456']));

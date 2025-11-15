@@ -342,7 +342,7 @@ class LoyaltyApiTest extends TestCase
         $order = Order::factory()->create([
             'restaurant_id' => $this->restaurant->id,
             'user_id' => $this->customer->id,
-            'total' => 50.00,
+            'grand_total' => 50.00,
             'status' => 'completed'
         ]);
 

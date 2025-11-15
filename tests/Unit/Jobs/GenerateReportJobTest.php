@@ -260,13 +260,13 @@ class GenerateReportJobTest extends TestCase
 
         Order::factory()->create([
             'user_id' => $user->id,
-            'total' => 100.00,
+            'grand_total' => 100.00,
             'created_at' => now()
         ]);
 
         Order::factory()->create([
             'user_id' => $user->id,
-            'total' => 200.00,
+            'grand_total' => 200.00,
             'created_at' => now()
         ]);
 

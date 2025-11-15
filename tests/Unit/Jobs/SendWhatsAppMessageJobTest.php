@@ -66,7 +66,7 @@ class SendWhatsAppMessageJobTest extends TestCase
             '+1234567890',
             'order_confirmation',
             'template',
-            ['order_id' => '12345', 'total' => '99.99']
+            ['order_id' => '12345', 'grand_total' => '99.99']
         );
 
         $job->handle();

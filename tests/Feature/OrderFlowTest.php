@@ -275,7 +275,7 @@ class OrderFlowTest extends TestCase
             'status' => 1,
             'payment_type' => '3',
             'payment_id' => null,
-            'total' => 50.00,
+            'grand_total' => 50.00,
             'tax' => 5.00,
             'delivery_charge' => 5.00,
             'grand_total' => 60.00,
@@ -320,7 +320,7 @@ class OrderFlowTest extends TestCase
             'order_type' => 1,
             'status' => 2, // Processing
             'payment_type' => '3',
-            'total' => 50.00,
+            'grand_total' => 50.00,
             'grand_total' => 60.00,
         ]);
 
@@ -345,7 +345,7 @@ class OrderFlowTest extends TestCase
             'order_type' => 1,
             'status' => 1, // Pending
             'payment_type' => '3',
-            'total' => 50.00,
+            'grand_total' => 50.00,
             'grand_total' => 60.00,
         ]);
 

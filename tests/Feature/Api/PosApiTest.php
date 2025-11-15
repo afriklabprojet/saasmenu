@@ -239,7 +239,7 @@ class PosApiTest extends TestCase
             'restaurant_id' => $this->restaurant->id,
             'session_id' => $session->id,
             'subtotal' => 25.00,
-            'total' => 27.50,
+            'grand_total' => 27.50,
             'status' => 'active'
         ]);
 
@@ -262,7 +262,7 @@ class PosApiTest extends TestCase
         // Vérifier que la commande a été créée
         $this->assertDatabaseHas('orders', [
             'restaurant_id' => $this->restaurant->id,
-            'total' => 27.50,
+            'grand_total' => 27.50,
             'payment_method' => 'cash',
             'source' => 'pos'
         ]);
@@ -287,7 +287,7 @@ class PosApiTest extends TestCase
         Order::factory()->count(5)->create([
             'restaurant_id' => $this->restaurant->id,
             'source' => 'pos',
-            'total' => 30.00,
+            'grand_total' => 30.00,
             'created_at' => now()->subHours(3)
         ]);
 

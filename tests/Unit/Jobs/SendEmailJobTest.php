@@ -128,7 +128,7 @@ class SendEmailJobTest extends TestCase
         $data = [
             'name' => 'John Doe',
             'order_id' => '12345',
-            'total' => 99.99
+            'grand_total' => 99.99
         ];
 
         $job = new SendEmailJob(

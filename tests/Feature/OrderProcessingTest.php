@@ -83,7 +83,7 @@ class OrderProcessingTest extends TestCase
                     'item_id' => $this->item->id,
                     'quantity' => 1,
                     'price' => 25.99,
-                    'total' => 25.99
+                    'grand_total' => 25.99
                 ]
             ]
         ];
