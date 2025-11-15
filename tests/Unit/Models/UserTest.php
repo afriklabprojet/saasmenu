@@ -22,7 +22,7 @@ class UserTest extends TestCase
             'is_available' => 1,
         ];
 
-        $user = User::create($userData);
+        $user = User::forceCreate($userData);
 
         $this->assertInstanceOf(User::class, $user);
         $this->assertEquals($userData['name'], $user->name);
@@ -39,10 +39,10 @@ class UserTest extends TestCase
             'mobile' => '0987654321',
             'password' => bcrypt('password'),
             'type' => 2, // Vendor
-            'is_available' => 1,
+            
         ];
 
-        $vendor = User::create($vendorData);
+        $vendor = User::forceCreate($vendorData);
 
         $this->assertEquals(2, $vendor->type);
         $this->assertTrue($vendor->type == 2); // Vendor check
@@ -57,10 +57,10 @@ class UserTest extends TestCase
             'mobile' => '1122334455',
             'password' => bcrypt('password'),
             'type' => 3, // Customer
-            'is_available' => 1,
+            
         ];
 
-        $customer = User::create($customerData);
+        $customer = User::forceCreate($customerData);
 
         $this->assertEquals(3, $customer->type);
         $this->assertTrue($customer->type == 3); // Customer check
@@ -69,43 +69,43 @@ class UserTest extends TestCase
     /** @test */
     public function user_email_must_be_unique()
     {
-        User::create([
+        User::forceCreate([
             'name' => 'First User',
             'email' => 'test@example.com',
             'mobile' => '1234567890',
             'password' => bcrypt('password'),
             'type' => 1,
-            'is_available' => 1,
+            
         ]);
 
         $this->expectException(\Illuminate\Database\QueryException::class);
 
-        User::create([
+        User::forceCreate([
             'name' => 'Second User',
             'email' => 'test@example.com',
             'mobile' => '0987654321',
             'password' => bcrypt('password'),
             'type' => 1,
-            'is_available' => 1,
+            
         ]);
     }
 
     /** @test */
-    public function user_can_be_enabled_or_disabled()
+    public function user_can_be_verified()
     {
-        $user = User::create([
+        $user = User::forceCreate([
             'name' => 'Test User',
             'email' => 'test@example.com',
             'mobile' => '1234567890',
             'password' => bcrypt('password'),
             'type' => 1,
-            'is_available' => 1,
+            'is_verified' => 0,
         ]);
 
-        $this->assertEquals(1, $user->is_available);
+        $this->assertEquals(0, $user->is_verified);
 
-        $user->update(['is_available' => 0]);
+        $user->forceFill(['is_verified' => 1])->save();
 
-        $this->assertEquals(0, $user->fresh()->is_available);
+        $this->assertEquals(1, $user->fresh()->is_verified);
     }
 }

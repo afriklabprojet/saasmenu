@@ -42,7 +42,7 @@ class Restaurant extends Model
     ];
 
     /**
-     * Get restaurant owner
+     * Get restaurant owner (vendor user)
      */
     public function user()
     {
@@ -50,11 +50,19 @@ class Restaurant extends Model
     }
 
     /**
+     * Alias for user() - vendor relationship
+     */
+    public function vendor()
+    {
+        return $this->user();
+    }
+
+    /**
      * Get restaurant categories
      */
     public function categories()
     {
-        return $this->hasMany(Category::class, 'user_id', 'user_id');
+        return $this->hasMany(Category::class, 'vendor_id', 'user_id');
     }
 
     /**
@@ -62,7 +70,7 @@ class Restaurant extends Model
      */
     public function items()
     {
-        return $this->hasMany(Item::class, 'user_id', 'user_id');
+        return $this->hasMany(Item::class, 'vendor_id', 'user_id');
     }
 
     /**
@@ -70,7 +78,15 @@ class Restaurant extends Model
      */
     public function orders()
     {
-        return $this->hasMany(Order::class, 'user_id', 'user_id');
+        return $this->hasMany(Order::class, 'vendor_id', 'user_id');
+    }
+
+    /**
+     * Check if restaurant is active
+     */
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
     }
 
     /**
