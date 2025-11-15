@@ -125,10 +125,8 @@ class OrderFlowTest extends TestCase
             'tax' => $this->item->tax,
         ]);
 
-        // Simuler la session
-        Session::put('restaurant_id', $this->vendor->id);
-
         $response = $this->actingAs($this->customer)
+            ->withSession(['restaurant_id' => $this->vendor->id])
             ->get(route('v2.order.checkout'));
 
         $response->assertStatus(200);
@@ -151,7 +149,6 @@ class OrderFlowTest extends TestCase
             'tax' => $this->item->tax,
         ]);
 
-        Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
             ->get(route('v2.order.checkout'));
@@ -179,7 +176,6 @@ class OrderFlowTest extends TestCase
             'is_deleted' => 2,
         ]);
 
-        Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
             ->post(route('v2.order.promo.apply'), [
@@ -208,7 +204,6 @@ class OrderFlowTest extends TestCase
             'is_deleted' => 2,
         ]);
 
-        Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
             ->post(route('v2.order.promo.apply'), [
@@ -222,7 +217,6 @@ class OrderFlowTest extends TestCase
     /** @test */
     public function test_timeslot_generation()
     {
-        Session::put('restaurant_id', $this->vendor->id);
 
         $response = $this->actingAs($this->customer)
             ->post(route('v2.order.timeslot'), [
@@ -251,7 +245,6 @@ class OrderFlowTest extends TestCase
             'tax' => $this->item->tax,
         ]);
 
-        Session::put('restaurant_id', $this->vendor->id);
         Session::put('delivery_type', '1'); // Delivery
         Session::put('address', '123 Test Street');
         Session::put('delivery_area', $this->deliveryArea->id);
@@ -400,7 +393,6 @@ class OrderFlowTest extends TestCase
             'tax' => $this->item->tax,
         ]);
 
-        Session::put('restaurant_id', $this->vendor->id);
 
         // 2. Checkout
         $checkoutResponse = $this->actingAs($this->customer)

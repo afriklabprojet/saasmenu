@@ -45,7 +45,7 @@ class OrderController extends Controller
         $vdata = $vdata ?: $this->getVendorId($request) ?: Session::get('restaurant_id');
 
         if (empty($vdata)) {
-            return redirect('/')->with('error', 'Restaurant non sélectionné');
+            return response()->json(['error' => 'Restaurant non sélectionné'], 400);
         }
 
         $settingdata = helper::appdata($vdata);
