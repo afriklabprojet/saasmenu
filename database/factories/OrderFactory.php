@@ -27,18 +27,29 @@ class OrderFactory extends Factory
             'order_number' => 'ORD-' . $this->faker->unique()->randomNumber(8),
             'user_id' => User::factory()->create(['type' => 3]), // Customer
             'vendor_id' => User::factory()->create(['type' => 2]), // Vendor
+            
+            // Customer info (nouvelles colonnes)
             'customer_name' => $this->faker->name(),
             'customer_email' => $this->faker->email(),
-            'customer_mobile' => $this->faker->phoneNumber(),
-            'customer_address' => $this->faker->address(),
+            'mobile' => $this->faker->phoneNumber(), // Nom correct de la colonne
+            'address' => $this->faker->address(),
+            
+            // Anciennes colonnes user_* pour compatibilité
+            'user_name' => $this->faker->name(),
+            'user_email' => $this->faker->email(),
+            'user_mobile' => $this->faker->phoneNumber(),
+            
             'sub_total' => $subtotal,
             'tax' => $tax,
+            'tax_amount' => $tax,
             'delivery_charge' => $deliveryCharge,
-            'discount_amount' => $discount,
+            'offer_amount' => $discount,
             'grand_total' => $grandTotal,
             'status' => $this->faker->numberBetween(1, 6), // 1=Pending, 2=Confirmed, etc.
+            'status_type' => $this->faker->numberBetween(1, 4), // 1=Pending, 2=Accepted, 3=Delivered, 4=Cancelled
             'order_type' => $this->faker->numberBetween(1, 3), // 1=Delivery, 2=Pickup, 3=Dine-in
             'payment_status' => $this->faker->numberBetween(1, 3), // 1=Pending, 2=Paid, 3=Failed
+            'payment_type' => $this->faker->numberBetween(1, 6), // 1=COD, 2-6=Online
             'payment_method' => $this->faker->randomElement(['cash', 'card', 'paypal', 'stripe']),
             'order_date' => $this->faker->dateTimeBetween('-30 days', 'now'),
             'delivery_date' => $this->faker->dateTimeBetween('now', '+7 days'),

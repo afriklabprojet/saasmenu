@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('settings', function (Blueprint $table) {
-            $table->string('tracking_id')->nullable()->after('cover_image');
+            // Vérifier si la colonne n'existe pas déjà
+            if (!Schema::hasColumn('settings', 'tracking_id')) {
+                $table->string('tracking_id')->nullable()->after('cover_image');
+            }
         });
     }
 
